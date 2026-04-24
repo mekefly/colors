@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
+import { useEventListener } from "@vueuse/core";
 
 extend([namesPlugin]);
 
@@ -170,6 +171,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("mouseup", handleMouseUp);
 });
+useEventListener(window, "mousemove", handleMouseMove, { passive: true });
 </script>
 
 <template>
@@ -180,7 +182,6 @@ onUnmounted(() => {
       height="200"
       class="cursor-crosshair rounded-full"
       @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
     />
     <div
       ref="pickerRef"
