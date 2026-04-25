@@ -37,7 +37,7 @@ let clickCopyColor = () => {
     <!-- 主要内容区域 -->
     <div class="mx-auto grid max-w-7xl grid-cols-12 gap-6 p-6">
       <!-- 左侧：色轮和滑块 -->
-      <div class="col-span-4 space-y-6">
+      <div class="col-span-6 space-y-6">
         <div class="rounded-2xl bg-white p-6 shadow-lg">
           <div class="mb-6 flex justify-center">
             <ColorWheel v-model="currentColor" />
@@ -49,38 +49,36 @@ let clickCopyColor = () => {
         </div>
       </div>
 
-      <!-- 中间：颜色格式显示 -->
-      <div class="col-span-4">
-        <div class="h-full rounded-2xl bg-white p-6 shadow-lg">
-          <ColorFormats :color="currentColor" />
-        </div>
-      </div>
-
       <!-- 右侧：和谐色 -->
-      <div class="col-span-4">
+      <div class="col-span-6">
         <div class="rounded-2xl bg-white p-6 shadow-lg">
           <HarmonyColors :color="currentColor" />
         </div>
       </div>
-    </div>
-
-    <!-- 底部操作栏 -->
-    <div
-      class="fixed right-0 bottom-0 left-0 flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4"
-    >
-      <div class="flex items-center space-x-4">
-        <label class="flex cursor-pointer items-center space-x-2">
-          <input v-model="isColorRemovalHash" type="checkbox" class="rounded text-blue-600" />
-          <span class="text-sm text-gray-700">色值去 "#"</span>
-        </label>
+      <!-- 中间：颜色格式显示 -->
+      <div class="col-span-6">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
+          <ColorFormats v-model="currentColor" />
+        </div>
       </div>
-      <div class="flex items-center space-x-3">
-        <button
-          class="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-          @click="clickCopyColor()"
-        >
-          复制颜色
-        </button>
+      <!-- 底部操作栏 -->
+      <div class="col-span-6">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
+          <div class="flex items-center space-x-4">
+            <label class="flex cursor-pointer items-center space-x-2">
+              <input v-model="isColorRemovalHash" type="checkbox" class="rounded text-blue-600" />
+              <span class="text-sm text-gray-700">色值去 "#"</span>
+            </label>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button
+              class="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
+              @click="clickCopyColor()"
+            >
+              复制颜色
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
