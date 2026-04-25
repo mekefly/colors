@@ -79,10 +79,16 @@ useEventListener(document, "mousemove", handleMouseMove, { passive: true });
 </script>
 
 <template>
-  <div ref="sliderRef" class="relative h-6 rounded-full cursor-pointer" :style="{ background: gradient }"
-    @mousedown.prevent="handleMouseDown">
-    <div ref="thumbRef"
+  <div
+    ref="sliderRef"
+    class="relative h-6 rounded-full cursor-pointer"
+    :style="{ background: gradient }"
+    @mousedown.prevent="handleMouseDown"
+  >
+    <div
+      ref="thumbRef"
       class="absolute top-1/2 w-6 h-6 bg-white rounded-full shadow-md border border-gray-300 pointer-events-none"
-      style="transform: translate(-50%, -50%)" />
+      style="transform: translate(-50%, -50%)"
+    />
   </div>
 </template>

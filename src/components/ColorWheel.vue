@@ -24,8 +24,8 @@ onMounted(() => {
 });
 const v = computed(() => colord(props.modelValue).toHsv().v);
 watch(v, () => {
-      // 重新绘制色轮以更新亮度
-      drawColorWheel();
+  // 重新绘制色轮以更新亮度
+  drawColorWheel();
 });
 watch(
   () => props.modelValue,
@@ -109,11 +109,11 @@ const updatePickerPosition = () => {
   picker.style.left = `${x}px`;
   picker.style.top = `${y}px`;
   // 保持取色器始终可见，不根据亮度调整透明度
-  picker.style.opacity = '1';
+  picker.style.opacity = "1";
 
   // 智能选择边框颜色：根据亮度动态选择白色或黑色，确保最大对比度
   // 当亮度低于 50% 时使用白色，高于 50% 时使用黑色
-  const borderColor = hsv.v < 50 ? '#ffffff' : '#000000';
+  const borderColor = hsv.v < 50 ? "#ffffff" : "#000000";
   picker.style.borderColor = borderColor;
 };
 
