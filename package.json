@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "preview": "vite preview",
     "build": "vite build",
-    "type-check": "vue-tsc --build",
+    "check-all": "npm run fmt:check && npm run lint  && npm run type-check && npm run build",
+    "dev": "vite dev",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "preview": "vite preview",
+    "release": "npm run check-all && ztools release",
+    "type-check": "vue-tsc --build --noEmit"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",
