@@ -2,8 +2,10 @@
 import { Colord, colord } from "colord";
 import { computed, ref, watch } from "vue";
 import { colordToHsvString } from "@/utils/color";
+import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
 let { flag } = defineProps<{ flag: "hsl" | "hsv/hsb" | "hex" | "rgb" }>();
+let config = useCounterStore();
 let inputting = ref(false);
 let color = defineModel<Colord>();
 let colorInputValues = ref<(string | number)[]>([]);
@@ -81,11 +83,16 @@ function toString(color: Colord) {
     case "hsv/hsb":
       return colordToHsvString(color);
     case "hex":
+      if (config.removeHash) return currentColorNotHash.value;
       return color.toHex();
     case "rgb":
       return color.toRgbString();
   }
 }
+const currentColorNotHash = computed(() => {
+  let hex = color.value.toHex();
+  return hex.startsWith("#") ? hex.substring(1) : hex;
+});
 </script>
 <template>
   <div class="flex items-center space-x-2">

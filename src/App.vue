@@ -4,9 +4,11 @@ import ColorFormats from "./components/ColorFormats.vue";
 import ColorSlider from "./components/ColorSlider.vue";
 import ColorWheel from "./components/ColorWheel.vue";
 import HarmonyColors from "./components/HarmonyColors.vue";
+import { useCounterStore } from "./utils/config";
 import { copyColor } from "./utils/copy";
 import zToolsApi from "./utils/ztoolsapi";
 
+const config = useCounterStore();
 const thereIsNoZToolsApiAvailable = !zToolsApi;
 const currentColor = ref("#FFFFFF");
 
@@ -66,17 +68,14 @@ let clickCopyColor = () => {
         <div class="rounded-2xl bg-white p-6 shadow-lg">
           <div class="flex items-center space-x-4">
             <label class="flex cursor-pointer items-center space-x-2">
-              <input v-model="isColorRemovalHash" type="checkbox" class="rounded text-blue-600" />
+              <input
+                :value="config.removeHash"
+                @input="($event: any) => config.$patch({ removeHash: $event.target.checked })"
+                type="checkbox"
+                class="rounded text-blue-600"
+              />
               <span class="text-sm text-gray-700">色值去 "#"</span>
             </label>
-          </div>
-          <div class="flex items-center space-x-3">
-            <button
-              class="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-              @click="clickCopyColor()"
-            >
-              复制颜色
-            </button>
           </div>
         </div>
       </div>

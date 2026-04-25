@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { colord } from "colord";
 import { computed } from "vue";
+import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
 import { showSuccess } from "@/utils/notification";
 
@@ -14,6 +15,7 @@ interface HarmonyColor {
   label: string;
   colors: string[];
 }
+const config = useCounterStore();
 
 const harmonyColors = computed<HarmonyColor[]>(() => {
   const color = colord(props.color);
@@ -38,6 +40,10 @@ const harmonyColors = computed<HarmonyColor[]>(() => {
     },
   ];
 });
+function copyColorWithConfig(hex: string) {
+  if (config.removeHash) hex = hex.substring(1);
+  copyColor(hex);
+}
 </script>
 
 <template>
@@ -53,7 +59,7 @@ const harmonyColors = computed<HarmonyColor[]>(() => {
           <div
             class="h-10 w-10 rounded-lg border border-gray-200 shadow-md transition-transform hover:scale-105"
             :style="{ backgroundColor: c }"
-            @click="copyColor(c)"
+            @click="copyColorWithConfig(c)"
           />
           <div
             class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap text-gray-500 opacity-0 transition-opacity group-hover:opacity-100"
