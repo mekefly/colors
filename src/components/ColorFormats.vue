@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { colord } from "colord";
-import { showError, showSuccess } from "@/utils/notification";
+import { computed } from "vue";
 import { copyColor } from "@/utils/copy";
+import { showError, showSuccess } from "@/utils/notification";
 
 interface Props {
   color: string;
@@ -39,7 +39,7 @@ const colorFormats = computed(() => {
       <label class="w-16 text-sm font-medium text-gray-700">HEX</label>
       <input
         :value="colorFormats.hex"
-        class="min-w-[0px] flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="min-w-[0px] flex-1 rounded border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
         readonly
       />
       <button
@@ -48,7 +48,7 @@ const colorFormats = computed(() => {
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-5 h-5"
+          class="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -68,7 +68,7 @@ const colorFormats = computed(() => {
       <label class="w-16 text-sm font-medium text-gray-700">RGB</label>
       <input
         :value="`${colorFormats.rgb.r}, ${colorFormats.rgb.g}, ${colorFormats.rgb.b}`"
-        class="min-w-[0px] flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="min-w-[0px] flex-1 rounded border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
         readonly
       />
       <button
@@ -77,7 +77,7 @@ const colorFormats = computed(() => {
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-5 h-5"
+          class="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -97,7 +97,7 @@ const colorFormats = computed(() => {
       <label class="w-16 text-sm font-medium text-gray-700">HSV/HSB</label>
       <input
         :value="`${colorFormats.hsv.h}, ${colorFormats.hsv.s}, ${colorFormats.hsv.v}`"
-        class="grow min-w-[0px] shrink px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="min-w-[0px] shrink grow rounded border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
         readonly
       />
       <button
@@ -106,7 +106,7 @@ const colorFormats = computed(() => {
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-5 h-5"
+          class="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -126,7 +126,7 @@ const colorFormats = computed(() => {
       <label class="w-16 text-sm font-medium text-gray-700">HSL</label>
       <input
         :value="`${colorFormats.hsl.h}, ${colorFormats.hsl.s}, ${colorFormats.hsl.l}`"
-        class="min-w-[0px] flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="min-w-[0px] flex-1 rounded border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
         readonly
       />
       <button
@@ -135,7 +135,7 @@ const colorFormats = computed(() => {
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-5 h-5"
+          class="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import ColorWheel from "./components/ColorWheel.vue";
-import ColorSlider from "./components/ColorSlider.vue";
 import ColorFormats from "./components/ColorFormats.vue";
+import ColorSlider from "./components/ColorSlider.vue";
+import ColorWheel from "./components/ColorWheel.vue";
 import HarmonyColors from "./components/HarmonyColors.vue";
 import { copyColor } from "./utils/copy";
 import zToolsApi from "./utils/ztoolsapi";
@@ -25,7 +25,7 @@ let clickCopyColor = () => {
 
 <template>
   <div v-if="thereIsNoZToolsApiAvailable">
-    <div class="flex flex-col items-center justify-center h-screen">
+    <div class="flex h-screen flex-col items-center justify-center">
       <p class="text-2xl font-semibold text-gray-800">颜色助手</p>
       <p class="text-gray-600">请使用 ZTools 打开此页面</p>
       <a class="text-blue-600 hover:underline" href="https://ztoolscenter.github.io/ZTools-doc/"
@@ -35,11 +35,11 @@ let clickCopyColor = () => {
   </div>
   <div v-else class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">
     <!-- 主要内容区域 -->
-    <div class="p-6 grid grid-cols-12 gap-6 max-w-7xl mx-auto">
+    <div class="mx-auto grid max-w-7xl grid-cols-12 gap-6 p-6">
       <!-- 左侧：色轮和滑块 -->
       <div class="col-span-4 space-y-6">
-        <div class="bg-white rounded-2xl shadow-lg p-6">
-          <div class="flex justify-center mb-6">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
+          <div class="mb-6 flex justify-center">
             <ColorWheel v-model="currentColor" />
           </div>
           <div class="space-y-4">
@@ -51,14 +51,14 @@ let clickCopyColor = () => {
 
       <!-- 中间：颜色格式显示 -->
       <div class="col-span-4">
-        <div class="h-full bg-white rounded-2xl shadow-lg p-6">
+        <div class="h-full rounded-2xl bg-white p-6 shadow-lg">
           <ColorFormats :color="currentColor" />
         </div>
       </div>
 
       <!-- 右侧：和谐色 -->
       <div class="col-span-4">
-        <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="rounded-2xl bg-white p-6 shadow-lg">
           <HarmonyColors :color="currentColor" />
         </div>
       </div>
@@ -66,17 +66,17 @@ let clickCopyColor = () => {
 
     <!-- 底部操作栏 -->
     <div
-      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between"
+      class="fixed right-0 bottom-0 left-0 flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4"
     >
       <div class="flex items-center space-x-4">
-        <label class="flex items-center space-x-2 cursor-pointer">
+        <label class="flex cursor-pointer items-center space-x-2">
           <input v-model="isColorRemovalHash" type="checkbox" class="rounded text-blue-600" />
           <span class="text-sm text-gray-700">色值去 "#"</span>
         </label>
       </div>
       <div class="flex items-center space-x-3">
         <button
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          class="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
           @click="clickCopyColor()"
         >
           复制颜色

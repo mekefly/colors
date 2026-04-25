@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from "vue";
+import { useEventListener } from "@vueuse/core";
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
-import { useEventListener } from "@vueuse/core";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 
 extend([namesPlugin]);
 
@@ -189,7 +189,7 @@ useEventListener(window, "mousemove", handleMouseMove, { passive: true });
     />
     <div
       ref="pickerRef"
-      class="absolute w-5 h-5 border-2 rounded-full shadow-md pointer-events-none"
+      class="pointer-events-none absolute h-5 w-5 rounded-full border-2 shadow-md"
       style="transform: translate(-50%, -50%)"
     />
   </div>
