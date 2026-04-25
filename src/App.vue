@@ -29,7 +29,7 @@ const currentColor = ref("#FFFFFF");
 //   });
 // });
 
-let currentColorNotHash = computed(() =>
+const currentColorNotHash = computed(() =>
   currentColor.value.startsWith("#") ? currentColor.value.substring(1) : currentColor.value,
 );
 let isColorRemovalHash = ref(false);
