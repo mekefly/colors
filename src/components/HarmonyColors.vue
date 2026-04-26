@@ -3,7 +3,7 @@ import { colord } from "colord";
 import { computed } from "vue";
 import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
-import { showSuccess } from "@/utils/notification";
+import { useMessage } from "@/utils/message";
 
 interface Props {
   color: string;
@@ -16,6 +16,7 @@ interface HarmonyColor {
   colors: string[];
 }
 const config = useCounterStore();
+const message = useMessage();
 
 const harmonyColors = computed<HarmonyColor[]>(() => {
   const color = colord(props.color);

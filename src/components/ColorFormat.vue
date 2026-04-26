@@ -7,7 +7,7 @@ import { copyColor } from "@/utils/copy";
 let { flag } = defineProps<{ flag: "hsl" | "hsv/hsb" | "hex" | "rgb" }>();
 let config = useCounterStore();
 let inputting = ref(false);
-let color = defineModel<Colord>();
+let color = defineModel<Colord>({ required: true });
 let colorInputValues = ref<(string | number)[]>([]);
 function toInputValue(color: Colord) {
   switch (flag) {
@@ -40,7 +40,7 @@ function inputValuesToColor(v: (string | number)[]): Colord | null {
         if (c1.isValid()) return c1;
         break;
       case "hex":
-        let c2 = colord(`${v[0]}`.startsWith("#") ? v[0].toString() : `#${v[0]}`);
+        let c2 = colord(`${v[0]}`.startsWith("#") ? (v[0] as any).toString() : `#${v[0]}`);
         if (c2.isValid()) return c2;
         break;
       case "rgb":
@@ -71,7 +71,7 @@ watch(colorInputValues, (newValues) => {
   if (c) color.value = c;
 });
 
-function change(index, v: string) {
+function change(index: number, v: string) {
   let _colorInputValues = [...colorInputValues.value];
   _colorInputValues[index] = v;
   colorInputValues.value = _colorInputValues;
@@ -90,7 +90,7 @@ function toString(color: Colord) {
   }
 }
 const currentColorNotHash = computed(() => {
-  let hex = color.value.toHex();
+  let hex = color.value?.toHex() || "#000000";
   return hex.startsWith("#") ? hex.substring(1) : hex;
 });
 </script>
