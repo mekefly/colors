@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getTagStyle } from "@/utils/tags";
+
 interface Props {
   tags: string[];
 }
@@ -6,12 +8,18 @@ interface Props {
 let props = defineProps<Props>();
 </script>
 <template>
-  <div class="flex min-h-[28px] flex-wrap gap-1.5">
+  <div class="flex min-h-[28px] flex-wrap gap-2">
     <span
       v-for="tag in tags"
       :key="tag"
-      class="inline-flex items-center rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 px-2.5 py-1 text-xs font-medium text-blue-700 shadow-sm transition-all hover:from-blue-100 hover:to-indigo-100 hover:shadow-md"
+      :class="[
+        'inline-flex cursor-pointer items-center rounded-lg px-2.5 py-0.5 text-xs font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-95',
+        getTagStyle(tag).bg,
+        getTagStyle(tag).text,
+        getTagStyle(tag).hover,
+      ]"
     >
+      <span class="mr-1 text-[10px] opacity-60">✦</span>
       {{ tag }}
     </span>
   </div>

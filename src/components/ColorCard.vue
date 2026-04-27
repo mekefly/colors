@@ -30,7 +30,10 @@ const tags = computed(() => props.favorite.tags ?? []);
       @click="copyColor(favorite.color)"
       title="点击复制颜色值"
     >
-      <Tags :tags="tags"></Tags>
+      <!-- 标签 -->
+      <div class="max-h-[100%] overflow-hidden">
+        <Tags :tags="tags"></Tags>
+      </div>
       <!-- 悬浮操作层 -->
       <div
         class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[#00000033] opacity-0 transition-all group-hover:opacity-100"
