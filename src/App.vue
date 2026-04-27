@@ -4,6 +4,7 @@ import ColorFormats from "./components/ColorFormats.vue";
 import ColorSlider from "./components/ColorSlider.vue";
 import ColorWheel from "./components/ColorWheel.vue";
 import HarmonyColors from "./components/HarmonyColors.vue";
+import ProvideMessage from "./components/ProvideMessage.vue";
 import { useCounterStore } from "./utils/config";
 import { copyColor } from "./utils/copy";
 import zToolsApi from "./utils/ztoolsapi";
@@ -80,6 +81,9 @@ let clickCopyColor = () => {
         </div>
       </div>
     </div>
+
+    <!-- 消息通知组件 -->
+    <ProvideMessage />
   </div>
 </template>
 
