@@ -4,7 +4,7 @@
  */
 
 import { defineStore } from "pinia";
-import { computed, ref, watch, toRaw } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import zToolsApi from "./ztoolsapi";
 
 export interface ColorFavorite {
@@ -19,34 +19,62 @@ const STORAGE_KEY = "color-favorites";
 /**
  * 获取所有收藏的颜色
  */
-export function getFavorites(): ColorFavorite[] {
+export function getFavorites(): DbDoc<{ data: ColorFavorite[] }> {
   try {
-    const data = zToolsApi.db.get<{ data: string }>(STORAGE_KEY);
-    return data ? JSON.parse(data.data) : [];
+    const data = zToolsApi.db.get<{ data: ColorFavorite[] }>(STORAGE_KEY);
+    return data ? data : { _id: STORAGE_KEY, data: [] };
   } catch (error) {
     console.error("读取收藏失败:", error);
-    return [];
+    throw new Error("读取收藏失败:" + error);
   }
 }
 
 /**
  * 保存收藏列表
  */
-function saveFavorites(favorites: ColorFavorite[]): void {
+async function saveFavorites(favoritesDoc: DbDoc<{ data: ColorFavorite[] }>): Promise<void> {
   try {
-    zToolsApi.db.put({ _id: STORAGE_KEY, data: JSON.stringify(favorites) });
-    console.log("已保存收藏", favorites);
+    const result = zToolsApi.db.put(JSON.parse(JSON.stringify(favoritesDoc)));
+    if (result.ok) {
+      // 更新 _rev，用于下次保存（直接修改原对象以保持引用一致性）
+      favoritesDoc._rev = result.rev;
+      console.log("已保存收藏", favoritesDoc);
+    } else if (result.error) {
+      console.error("保存收藏失败:", result.message);
+      throw new Error("保存收藏失败:" + result.message);
+    }
   } catch (error) {
     console.error("保存收藏失败:", error);
     throw new Error("保存收藏失败:" + error);
   }
 }
 export const useFavorites = defineStore(STORAGE_KEY, () => {
-  const value = ref(getFavorites());
+  const doc = ref(getFavorites());
+  const value = computed({
+    get: () => doc.value.data,
+    set: (value) => {
+      doc.value.data = value;
+    },
+  });
+
+  // 使用标志位防止递归更新
+  let isSaving = false;
+
   watch(
-    value,
-    (value) => {
-      saveFavorites(toRaw(value));
+    doc,
+    async (newValue) => {
+      // 如果正在保存中，跳过此次触发（避免 _rev 更新导致的递归）
+      if (isSaving) return;
+
+      isSaving = true;
+      try {
+        // 创建纯对象副本，保留 _rev 字段以避免数据库冲突
+        await saveFavorites(newValue);
+      } finally {
+        // 使用 nextTick 确保在下一个 tick 才允许再次保存
+        await nextTick();
+        isSaving = false;
+      }
     },
     { deep: true },
   );
