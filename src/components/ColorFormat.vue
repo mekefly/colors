@@ -13,15 +13,15 @@ function toInputValue(color: Colord) {
   switch (flag) {
     case "hsl":
       let hsl = color.toHsl();
-      return [hsl.h.toFixed(1), hsl.s.toFixed(1), hsl.l.toFixed(1)];
+      return [hsl.h.toString(), hsl.s.toString(), hsl.l.toString()];
     case "hsv/hsb":
       let hsv = color.toHsv();
-      return [hsv.h.toFixed(1), hsv.s.toFixed(1), hsv.v.toFixed(1)];
+      return [hsv.h.toString(), hsv.s.toString(), hsv.v.toString()];
     case "hex":
       return [color.toHex()];
     case "rgb":
       let rgb = color.toRgb();
-      return [rgb.r, rgb.g, rgb.b];
+      return [rgb.r.toString(), rgb.g.toString(), rgb.b.toString()];
   }
 }
 function inputValuesToColor(v: (string | number)[]): Colord | null {
@@ -102,6 +102,7 @@ const currentColorNotHash = computed(() => {
       :value="item"
       @focus="inputting = true"
       @change="inputting = false"
+      @blur="inputting = false"
       @input="
         (e: any) => {
           change(index, e.target.value);
