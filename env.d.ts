@@ -1,4 +1,6 @@
 /// <reference types="@ztools-center/ztools-api-types" />
+/// <reference types="vue-router/auto" />
+/// <reference types="vite/client" />
 // src/shims.d.ts
 
 // CSS 相关
@@ -19,11 +21,8 @@ declare module "*.woff";
 declare module "*.woff2";
 
 // Vue 单文件组件（有时需要）
-declare module "*.vue" {
-  import type { DefineComponent } from "vue";
-  const component: DefineAssistantComponent;
-  export default component;
-}
-
-// 通用兜底（谨慎使用）
-declare module "*";
+// declare module "*.vue" {
+//   import type { DefineComponent } from "vue";
+//   const component: DefineAssistantComponent;
+//   export default component;
+// }

@@ -21,7 +21,8 @@
     "colord": "^2.9.3",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.2",
-    "vue": "3.5.33"
+    "vue": "3.5.33",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",

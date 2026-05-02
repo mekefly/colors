@@ -17,6 +17,19 @@
       "explain": "打开插件选择一个颜色",
       "icon": "logo.png",
       "cmds": ["选择颜色"]
-    }
+    },
+    {
+      "code": "预览颜色",
+      "explain": "查看颜色",
+      "icon": "logo.png",
+      "cmds": [
+        {
+          "type": "regex",
+          "label": "颜色预览",
+          "match": "/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/i",
+          "minLength": 4
+        }
+      ]
+    } 
   ]
 }
