@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import ColorFormats from "@/components/ColorFormats.vue";
 import ColorSlider from "@/components/ColorSlider.vue";
 import ColorWheel from "@/components/ColorWheel.vue";
 import HarmonyColors from "@/components/HarmonyColors.vue";
 import { useCounterStore } from "@/utils/config";
+import { useCurrentColor } from "@/utils/current-color";
 
-const currentColor = ref("#FFFFFF");
+const currentColorStore = useCurrentColor();
+const currentColor = computed({
+  get: () => currentColorStore.currentColor,
+  set: (value) => currentColorStore.setCurrentColor(value),
+});
 const config = useCounterStore();
 </script>
 <template>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Help from "./components/Help.vue";
 import Layerout from "./components/Layerout.vue";
 import ProvideMessage from "./components/ProvideMessage.vue";
+import { useCurrentColor } from "./utils/current-color";
+import zToolsApi from "./utils/ztoolsapi";
 
 let router = useRouter();
 let route = useRoute();
@@ -19,7 +21,6 @@ let currentPage = computed(() => {
 });
 // 切换页面
 const switchPage = (page: "picker" | "favorites") => {
-  // currentPage.value = page;
   switch (page) {
     case "picker":
       router.push({ path: "/" });
@@ -29,6 +30,15 @@ const switchPage = (page: "picker" | "favorites") => {
       break;
   }
 };
+const currentColorStore = useCurrentColor();
+zToolsApi.onPluginEnter((parm) => {
+  switch (parm.code) {
+    case "预览颜色":
+      router.push({ path: "/" });
+      currentColorStore.setCurrentColor(parm.payload);
+      break;
+  }
+});
 </script>
 
 <template>
