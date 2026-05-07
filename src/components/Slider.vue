@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useElementBounding, useEventListener } from "@vueuse/core";
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { computed, ref, useTemplateRef, watch, onMounted, nextTick } from "vue";
 export interface Props {
   max?: number;
   min?: number;
@@ -116,6 +116,15 @@ watch(
   },
   { immediate: true },
 );
+
+/**
+ * 组件挂载后确保 thumb 位置正确
+ */
+onMounted(async () => {
+  await nextTick();
+  await nextTick(); // 等待两次以确保 DOM 完全渲染
+  updateThumbPosition();
+});
 
 /**
  * 开始拖动
