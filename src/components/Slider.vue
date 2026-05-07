@@ -6,6 +6,7 @@ export interface Props {
   min?: number;
   step?: number;
   background?: string;
+  enableWheel?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -13,6 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
   min: 0,
   step: 1,
   background: "#03f0fc",
+  enableWheel: false,
 });
 const value = defineModel<number>({
   default: 0,
@@ -173,12 +175,40 @@ const handleMouseUp = () => {
     }, 200);
   }
 };
+/**
+ * 处理滚轮事件
+ */
+const handleWheel = (e: WheelEvent) => {
+  if (!props.enableWheel || !sliderRef.value) return;
+
+  e.preventDefault();
+
+  // 根据滚轮方向调整值
+  const delta = e.deltaY > 0 ? -props.step : props.step;
+
+  // 如果按下 Shift 键，提升滑动速度（10倍）
+  const speedMultiplier = e.shiftKey ? 10 : 1;
+  let newValue = value.value + delta * speedMultiplier;
+
+  // 确保值在有效范围内
+  newValue = clampValue(newValue);
+  // 吸附到最近的步进点
+  newValue = snapToStep(newValue);
+
+  value.value = newValue;
+};
+
 useEventListener(document, ["mouseup", "mouseleave", "visibilitychange"], () => {
   updateThumbPosition();
   handleMouseUp();
 });
 
 useEventListener(document, "mousemove", handleMouseMove, { passive: true });
+
+// 如果启用了滚轮功能，则添加滚轮事件监听器
+if (props.enableWheel) {
+  useEventListener(sliderRef, "wheel", handleWheel, { passive: false });
+}
 </script>
 <template>
   <div

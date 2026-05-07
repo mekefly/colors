@@ -33,5 +33,5 @@ const gradient = computed(() => {
 </script>
 
 <template>
-  <Slider v-model="saturation" :min="0" :max="100" :step="1" :background="gradient" />
+  <Slider v-model="saturation" :min="0" :max="100" :step="1" :background="gradient" enable-wheel />
 </template>
