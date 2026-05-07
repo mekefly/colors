@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { ref } from "vue";
 import ColorFormats from "@/components/ColorFormats.vue";
-import ColorSlider from "@/components/ColorSlider.vue";
 import ColorWheel from "@/components/ColorWheel.vue";
 import HarmonyColors from "@/components/HarmonyColors.vue";
+import SaturationSlider from "@/components/SaturationSlider.vue";
+import ValueSlider from "@/components/ValueSlider.vue";
 import { useCounterStore } from "@/utils/config";
 import { useCurrentColor } from "@/utils/current-color";
 
@@ -24,8 +26,8 @@ const config = useCounterStore();
           <ColorWheel v-model="currentColor" />
         </div>
         <div class="space-y-4">
-          <ColorSlider v-model="currentColor" type="saturation" />
-          <ColorSlider v-model="currentColor" type="value" />
+          <SaturationSlider v-model="currentColor" />
+          <ValueSlider v-model="currentColor" />
         </div>
       </div>
     </div>
