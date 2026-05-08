@@ -1,10 +1,11 @@
+import { AnyColor, Colord, colord } from "colord";
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { shallowRef } from "vue";
 
 export const useCurrentColor = defineStore("currentColor", () => {
-  const currentColor = ref("#FFFFFF");
-  function setCurrentColor(color: string) {
-    currentColor.value = color;
+  const currentColor = shallowRef(colord("#FFFFFF"));
+  function setCurrentColor(color: AnyColor | Colord) {
+    currentColor.value = colord(color);
   }
   return {
     currentColor,

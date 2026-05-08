@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
-import { colord, extend } from "colord";
+import { Colord, colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 
 extend([namesPlugin]);
 
 interface Props {
-  modelValue: string;
+  modelValue: Colord;
 }
 
 const props = defineProps<Props>();
@@ -17,23 +17,28 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const pickerRef = ref<HTMLDivElement | null>(null);
 const isDragging = ref(false);
 
-const currentColor = ref(props.modelValue);
+// 使用 computed 直接引用 props，避免额外的 ref 导致递归更新
+const currentColor = computed(() => props.modelValue);
 
 onMounted(() => {
   drawColorWheel();
 });
 
+// 监听色相和饱和度变化，重新绘制色轮
 watch(
-  () => props.modelValue,
-  (newVal) => {
-    if (newVal !== currentColor.value) {
-      currentColor.value = newVal;
+  () => props.modelValue.toHsv(),
+  (newHsv, oldHsv) => {
+    // 只在色相或饱和度变化时重绘色轮（亮度变化不需要重绘整个色轮）
+    if (oldHsv && (newHsv.h !== oldHsv.h || newHsv.s !== oldHsv.s)) {
       updatePickerPosition();
-
-      // 重新绘制色轮以更新亮度
+      drawColorWheel();
+    } else if (!oldHsv) {
+      // 初始化时绘制
+      updatePickerPosition();
       drawColorWheel();
     }
   },
+  { deep: true },
 );
 
 /**
@@ -49,7 +54,7 @@ const drawColorWheel = () => {
   if (!ctx) return;
 
   // 获取当前颜色的亮度值，用于调整色轮整体亮度
-  const currentHsv = colord(currentColor.value).toHsv();
+  const currentHsv = currentColor.value.toHsv();
   const brightness = currentHsv.v / 100; // 转换为 0-1 范围
 
   // 获取画布尺寸和中心点坐标
@@ -92,7 +97,7 @@ const updatePickerPosition = () => {
   const picker = pickerRef.value;
   if (!canvas || !picker) return;
 
-  const color = colord(currentColor.value);
+  const color = currentColor.value;
   const hsv = color.toHsv();
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
@@ -152,10 +157,9 @@ const handleMouseMove = (e: MouseEvent) => {
   const hue = angle < 0 ? angle + 360 : angle;
   // 根据距离计算饱和度（距离越远，饱和度越高）
   const saturation = (distance / (canvas.width / 2 - 10)) * 100;
-  let oldColor = colord(currentColor.value).toHsv();
-  // 使用 HSV 颜色模型生成新颜色（色相和饱和度来自鼠标位置，明度固定为100%）
-  const newColor = colord({ h: hue, s: saturation, v: oldColor.v }).toHex();
-  currentColor.value = newColor;
+  const oldColor = currentColor.value.toHsv();
+  // 使用 HSV 颜色模型生成新颜色（色相和饱和度来自鼠标位置，明度保持不变）
+  const newColor = colord({ h: hue, s: saturation, v: oldColor.v });
   // 触发更新事件，通知父组件颜色变化
   emit("update:modelValue", newColor);
   // 更新取色器的位置指示器

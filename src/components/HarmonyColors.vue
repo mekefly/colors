@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { colord } from "colord";
+import { Colord } from "colord";
 import { computed } from "vue";
 import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
 import { useMessage } from "@/utils/message";
 
 interface Props {
-  color: string;
+  color: Colord;
 }
 
 const props = defineProps<Props>();
@@ -19,7 +19,7 @@ const config = useCounterStore();
 const message = useMessage();
 
 const harmonyColors = computed<HarmonyColor[]>(() => {
-  const color = colord(props.color);
+  const color = props.color;
   const hsv = color.toHsv();
 
   return [

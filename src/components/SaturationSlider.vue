@@ -1,33 +1,31 @@
 <script setup lang="ts">
-import { colord } from "colord";
+import { Colord, colord } from "colord";
 import { computed } from "vue";
 import Slider from "@/components/Slider.vue";
 
 interface Props {
-  modelValue: string;
+  modelValue: Colord;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits(["update:modelValue"]);
 
-const currentColor = computed(() => colord(props.modelValue));
-
 // 计算饱和度值 (0-100)
 const saturation = computed({
   get: () => {
-    const hsv = currentColor.value.toHsv();
+    const hsv = props.modelValue.toHsv();
     return hsv.s;
   },
   set: (value: number) => {
-    const hsv = currentColor.value.toHsv();
+    const hsv = props.modelValue.toHsv();
     const newColor = colord({ h: hsv.h, s: value, v: hsv.v });
-    emit("update:modelValue", newColor.toHex());
+    emit("update:modelValue", newColor);
   },
 });
 
 // 计算渐变背景
 const gradient = computed(() => {
-  const hsv = currentColor.value.toHsv();
+  const hsv = props.modelValue.toHsv();
   const start = colord({ ...hsv, s: 0 }).toHslString();
   const end = colord({ ...hsv, s: 100 }).toHslString();
   return `linear-gradient(to right, ${start}, ${end})`;
