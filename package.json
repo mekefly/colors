@@ -12,7 +12,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "preview": "vite preview",
-    "release": "npm run check-all && ztools release",
+    "publish": "npm run check-all && ztools publish",
     "type-check": "vue-tsc --build --noEmit"
   },
   "dependencies": {
