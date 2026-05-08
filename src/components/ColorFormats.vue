@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colord } from "colord";
+import { Colord } from "colord";
 import { computed } from "vue";
 import { copyColor } from "@/utils/copy";
 import { useMessage } from "@/utils/message";
@@ -8,20 +8,14 @@ import ColorFormat from "./ColorFormat.vue";
 
 const message = useMessage();
 const { addFavorite } = useFavorites();
-let color = defineModel<string>();
-let col = computed({
-  get: () => colord(color.value ?? "#000000"),
-  set: (v) => {
-    color.value = v.toHex();
-  },
-});
+let color = defineModel<Colord>({ required: true });
 
-const formats = ["hex", "rgb", "hsv/hsb", "hsl"] as const;
+const formats = ["hex", "rgb", "hsv/hsb", "hsl", "hwb", "cmyk", "lab", "lch", "xyz"] as const;
 
 // 添加到收藏
 const addToFavorites = () => {
   try {
-    addFavorite(color.value || "#000000");
+    addFavorite(color.value?.toHex() || "#000000");
     message.success("已添加到收藏");
   } catch (error) {
     message.error(error instanceof Error ? error.message : "添加失败");
@@ -54,6 +48,11 @@ const addToFavorites = () => {
     </button>
 
     <!-- HEX -->
-    <ColorFormat v-for="format in formats" :key="format" :flag="format" v-model="col"></ColorFormat>
+    <ColorFormat
+      v-for="format in formats"
+      :key="format"
+      :flag="format"
+      v-model="color"
+    ></ColorFormat>
   </div>
 </template>

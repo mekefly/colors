@@ -1,119 +1,233 @@
 <script setup lang="ts">
-import { Colord, colord } from "colord";
+import { Colord, colord, extend } from "colord";
+import cmykPlugin from "colord/plugins/cmyk";
+import hwbPlugin from "colord/plugins/hwb";
+import labPlugin from "colord/plugins/lab";
+import lchPlugin from "colord/plugins/lch";
+import xyzPlugin from "colord/plugins/xyz";
+extend([hwbPlugin, cmykPlugin, labPlugin, lchPlugin, xyzPlugin]);
 import { computed, ref, watch } from "vue";
 import { colordToHsvString } from "@/utils/color";
 import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
-let { flag } = defineProps<{ flag: "hsl" | "hsv/hsb" | "hex" | "rgb" }>();
-let config = useCounterStore();
-let inputting = ref(false);
-let color = defineModel<Colord>({ required: true });
-let colorInputValues = ref<(string | number)[]>([]);
-function toInputValue(color: Colord) {
+
+interface Props {
+  flag: "hsl" | "hsv/hsb" | "hex" | "rgb" | "hwb" | "cmyk" | "lab" | "lch" | "xyz";
+}
+
+const { flag } = defineProps<Props>();
+const config = useCounterStore();
+const color = defineModel<Colord>({ required: true });
+
+// 用户正在输入的标志
+const inputting = ref(false);
+
+/**
+ * 将 Colord 对象转换为输入框显示的值数组
+ */
+function toInputValue(colorObj: Colord): (string | number)[] {
   switch (flag) {
-    case "hsl":
-      let hsl = color.toHsl();
-      return [hsl.h.toString(), hsl.s.toString(), hsl.l.toString()];
-    case "hsv/hsb":
-      let hsv = color.toHsv();
-      return [hsv.h.toString(), hsv.s.toString(), hsv.v.toString()];
+    case "hsl": {
+      const hsl = colorObj.toHsl();
+      return [Math.round(hsl.h), Math.round(hsl.s), Math.round(hsl.l)];
+    }
+    case "hsv/hsb": {
+      const hsv = colorObj.toHsv();
+      return [Math.round(hsv.h), Math.round(hsv.s), Math.round(hsv.v)];
+    }
     case "hex":
-      return [color.toHex()];
-    case "rgb":
-      let rgb = color.toRgb();
-      return [rgb.r.toString(), rgb.g.toString(), rgb.b.toString()];
+      return [colorObj.toHex()];
+    case "rgb": {
+      const rgb = colorObj.toRgb();
+      return [rgb.r, rgb.g, rgb.b];
+    }
+    case "hwb": {
+      const hwb = colorObj.toHwb();
+      return [Math.round(hwb.h), Math.round(hwb.w), Math.round(hwb.b)];
+    }
+    case "cmyk": {
+      const cmyk = colorObj.toCmyk();
+      return [Math.round(cmyk.c), Math.round(cmyk.m), Math.round(cmyk.y), Math.round(cmyk.k)];
+    }
+    case "lab": {
+      const lab = colorObj.toLab();
+      return [Math.round(lab.l), Math.round(lab.a), Math.round(lab.b)];
+    }
+    case "lch": {
+      const lch = colorObj.toLch();
+      return [Math.round(lch.l), Math.round(lch.c), Math.round(lch.h)];
+    }
+    case "xyz": {
+      const xyz = colorObj.toXyz();
+      return [
+        Math.round(xyz.x * 100) / 100,
+        Math.round(xyz.y * 100) / 100,
+        Math.round(xyz.z * 100) / 100,
+      ];
+    }
   }
 }
-function inputValuesToColor(v: (string | number)[]): Colord | null {
+
+/**
+ * 将输入框的值数组转换回 Colord 对象
+ */
+function inputValuesToColor(values: (string | number)[]): Colord | null {
   try {
     switch (flag) {
-      case "hsl":
-        let c = colord({
-          h: parseInt(v[0] as any),
-          s: parseInt(v[1] as any),
-          l: parseInt(v[2] as any),
+      case "hsl": {
+        const c = colord({
+          h: Number(values[0]),
+          s: Number(values[1]),
+          l: Number(values[2]),
         });
-        if (c.isValid()) return c;
-        break;
-      case "hsv/hsb":
-        let c1 = colord({ h: parseInt(v[0] as any), s: parseInt(v[1] as any), v: Number(v[2]) });
-        if (c1.isValid()) return c1;
-        break;
-      case "hex":
-        let c2 = colord(`${v[0]}`.startsWith("#") ? (v[0] as any).toString() : `#${v[0]}`);
-        if (c2.isValid()) return c2;
-        break;
-      case "rgb":
-        let c3 = colord({
-          r: parseInt(v[0] as any),
-          g: parseInt(v[1] as any),
-          b: parseInt(v[2] as any),
+        return c.isValid() ? c : null;
+      }
+      case "hsv/hsb": {
+        const c = colord({
+          h: Number(values[0]),
+          s: Number(values[1]),
+          v: Number(values[2]),
         });
-        if (c3.isValid()) return c3;
-        break;
+        return c.isValid() ? c : null;
+      }
+      case "hex": {
+        const hexStr = String(values[0]);
+        const c = colord(hexStr.startsWith("#") ? hexStr : `#${hexStr}`);
+        return c.isValid() ? c : null;
+      }
+      case "rgb": {
+        const c = colord({
+          r: Number(values[0]),
+          g: Number(values[1]),
+          b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "hwb": {
+        const c = colord({
+          h: Number(values[0]),
+          w: Number(values[1]),
+          b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "cmyk": {
+        const c = colord({
+          c: Number(values[0]),
+          m: Number(values[1]),
+          y: Number(values[2]),
+          k: Number(values[3]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "lab": {
+        const c = colord({
+          l: Number(values[0]),
+          a: Number(values[1]),
+          b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "lch": {
+        const c = colord({
+          l: Number(values[0]),
+          c: Number(values[1]),
+          h: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "xyz": {
+        const c = colord({
+          x: Number(values[0]) / 100,
+          y: Number(values[1]) / 100,
+          z: Number(values[2]) / 100,
+        });
+        return c.isValid() ? c : null;
+      }
     }
   } catch (e) {
-    console.error(e);
+    console.error("颜色转换失败:", e);
+    return null;
   }
-
-  return null;
 }
-watch(
-  color,
-  (newColor) => {
-    if (inputting.value) return;
-    colorInputValues.value = toInputValue(newColor);
-  },
-  { immediate: true },
-);
-watch(colorInputValues, (newValues) => {
-  let c = inputValuesToColor(newValues);
-  if (c) color.value = c;
-});
 
-function change(index: number, v: string) {
-  let _colorInputValues = [...colorInputValues.value];
-  _colorInputValues[index] = v;
-  colorInputValues.value = _colorInputValues;
+// 计算当前应该显示的输入值（基于 color model）
+const displayValues = computed(() => toInputValue(color.value));
+
+// 本地编辑状态：用户输入时的临时值
+const localValues = ref<(string | number)[]>([...displayValues.value]);
+
+// 当 color 变化且不在输入状态时，同步到本地值
+watch(displayValues, updateLocalValues, { deep: true });
+
+function updateLocalValues(newDisplayValues: Array<string | number>) {
+  if (!inputting.value) {
+    localValues.value = [...newDisplayValues];
+  }
 }
-function toString(color: Colord) {
+
+/**
+ * 处理输入框变化
+ */
+function handleInputChange(index: number, value: string) {
+  const newValues = [...localValues.value];
+  newValues[index] = value;
+  localValues.value = newValues;
+
+  // 尝试转换并更新 color
+  const newColor = inputValuesToColor(newValues);
+  if (newColor) {
+    color.value = newColor;
+  }
+}
+
+/**
+ * 获取用于复制的字符串表示
+ */
+function getCopyString(): string {
   switch (flag) {
     case "hsl":
-      return color.toHslString();
+      return color.value.toHslString();
     case "hsv/hsb":
-      return colordToHsvString(color);
+      return colordToHsvString(color.value);
     case "hex":
-      if (config.removeHash) return currentColorNotHash.value;
-      return color.toHex();
+      return config.removeHash ? color.value.toHex().substring(1) : color.value.toHex();
     case "rgb":
-      return color.toRgbString();
+      return color.value.toRgbString();
+    case "hwb":
+      return color.value.toHwbString();
+    case "cmyk":
+      return color.value.toCmykString();
+    case "lab":
+      return `lab(${color.value.toLab().l.toFixed(0)} ${color.value.toLab().a.toFixed(0)} ${color.value.toLab().b.toFixed(0)})`;
+    case "lch":
+      return `lch(${color.value.toLch().l.toFixed(0)} ${color.value.toLch().c.toFixed(0)} ${color.value.toLch().h.toFixed(0)})`;
+    case "xyz":
+      const xyz = color.value.toXyz();
+      return `xyz(${(xyz.x * 100).toFixed(2)} ${(xyz.y * 100).toFixed(2)} ${(xyz.z * 100).toFixed(2)})`;
   }
 }
-const currentColorNotHash = computed(() => {
-  let hex = color.value?.toHex() || "#000000";
-  return hex.startsWith("#") ? hex.substring(1) : hex;
-});
+function handleBlur() {
+  inputting.value = false;
+  // 当停止输入后，将本地值更新到合法值
+  updateLocalValues(displayValues.value);
+}
 </script>
 <template>
   <div class="flex items-center space-x-2">
-    <label class="w-16 text-sm font-medium text-gray-700">{{ flag.toUpperCase() }}</label>
+    <label class="w-16 text-sm font-medium">{{ flag.toUpperCase() }}</label>
     <input
-      v-for="(item, index) in colorInputValues"
+      v-for="(item, index) in localValues"
+      :key="index"
       :value="item"
       @focus="inputting = true"
-      @change="inputting = false"
-      @blur="inputting = false"
-      @input="
-        (e: any) => {
-          change(index, e.target.value);
-          inputting = true;
-        }
-      "
+      @blur="handleBlur"
+      @input="(e: any) => handleInputChange(index, e.target.value)"
       class="min-w-[0px] flex-1 rounded border border-gray-300 px-3 py-1 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
     />
     <button
-      @click="copyColor(toString(color))"
-      class="grow-0 p-1 text-gray-500 hover:text-gray-700"
+      @click="copyColor(getCopyString())"
+      class="grow-0 p-1 transition-transform duration-200 hover:scale-105"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
