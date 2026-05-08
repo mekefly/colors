@@ -3,8 +3,8 @@
 一个功能强大的颜色选择和管理工具，为 [ZTools](https://github.com/ZToolsCenter/ZTools) 开发的插件。
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Vue](https://img.shields.io/badge/Vue-3.6.0-green.svg)
-![Tailwind](https://img.shields.io/badge/Tailwind-4.2.2-38bdf8.svg)
+![Vue](https://img.shields.io/badge/Vue-3.5-green.svg)
+![Tailwind](https://img.shields.io/badge/Tailwind-4.2-38bdf8.svg)
 
 ## ✨ 特性
 
@@ -81,7 +81,7 @@ colors/
 
 ## 🛠️ 技术栈
 
-- **框架**: Vue 3.6.0 (Composition API + `<script setup>`)
+- **框架**: Vue 3.5.x (Composition API + `<script setup>`)
 - **样式**: Tailwind CSS 4.2.2
 - **构建**: Vite 8.0.10 采用最近发布的vite8作为代码打包器
 - **语言**: TypeScript ~6.0.0 采用最近发布的ts6引擎
@@ -117,9 +117,9 @@ colors/
 - [ ] 图片取色功能
 - [ ] 传统色系（中国传统色、日本传统色）
 - [ ] 渐变色生成与管理
-- [ ] 颜色收藏功能
+- [x] 颜色收藏功能
 - [ ] 颜色历史记录
-- [ ] CMYK、HSI、CIE-LAB 格式支持
+- [x] CMYK、HSI、CIE-LAB 格式支持
 
 ## 🤝 贡献指南
 
