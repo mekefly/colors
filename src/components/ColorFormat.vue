@@ -138,9 +138,9 @@ function inputValuesToColor(values: (string | number)[]): Colord | null {
       }
       case "xyz": {
         const c = colord({
-          x: Number(values[0]) / 100,
-          y: Number(values[1]) / 100,
-          z: Number(values[2]) / 100,
+          x: Number(values[0]),
+          y: Number(values[1]),
+          z: Number(values[2]),
         });
         return c.isValid() ? c : null;
       }
@@ -191,7 +191,8 @@ function getCopyString(): string {
     case "hsv/hsb":
       return colordToHsvString(color.value);
     case "hex":
-      return config.removeHash ? color.value.toHex().substring(1) : color.value.toHex();
+      let hex = color.value.toHex();
+      return config.removeHash ? hex.substring(1) : hex;
     case "rgb":
       return color.value.toRgbString();
     case "hwb":
@@ -199,12 +200,14 @@ function getCopyString(): string {
     case "cmyk":
       return color.value.toCmykString();
     case "lab":
-      return `lab(${color.value.toLab().l.toFixed(0)} ${color.value.toLab().a.toFixed(0)} ${color.value.toLab().b.toFixed(0)})`;
+      const lab = color.value.toLab();
+      return `lab(${lab.l.toFixed(0)} ${lab.a.toFixed(0)} ${lab.b.toFixed(0)})`;
     case "lch":
-      return `lch(${color.value.toLch().l.toFixed(0)} ${color.value.toLch().c.toFixed(0)} ${color.value.toLch().h.toFixed(0)})`;
+      const lch = color.value.toLch();
+      return `lch(${lch.l.toFixed(0)} ${lch.c.toFixed(0)} ${lch.h.toFixed(0)})`;
     case "xyz":
       const xyz = color.value.toXyz();
-      return `xyz(${(xyz.x * 100).toFixed(2)} ${(xyz.y * 100).toFixed(2)} ${(xyz.z * 100).toFixed(2)})`;
+      return `xyz(${xyz.x.toFixed(2)} ${xyz.y.toFixed(2)} ${xyz.z.toFixed(2)})`;
   }
 }
 function handleBlur() {
