@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { ref } from "vue";
+import Card from "@/components/Card.vue";
 import ColorFormats from "@/components/ColorFormats.vue";
 import ColorWheel from "@/components/ColorWheel.vue";
 import HarmonyColors from "@/components/HarmonyColors.vue";
@@ -20,45 +21,40 @@ const config = useCounterStore();
   <!-- 取色器页面 -->
   <div class="grid grid-cols-12 gap-6">
     <!-- 色轮和滑块 -->
-    <div class="col-span-6 space-y-6">
-      <div class="rounded-2xl bg-white p-6 shadow-lg">
-        <div class="mb-6 flex justify-center">
-          <ColorWheel v-model="currentColor" />
-        </div>
-        <div class="space-y-4">
-          <SaturationSlider v-model="currentColor" />
-          <ValueSlider v-model="currentColor" />
-        </div>
+    <Card>
+      <div class="mb-6 flex justify-center">
+        <ColorWheel v-model="currentColor" />
       </div>
-    </div>
+      <div class="space-y-4">
+        <SaturationSlider v-model="currentColor" />
+        <ValueSlider v-model="currentColor" />
+      </div>
+    </Card>
 
     <!-- 和谐色 -->
-    <div class="col-span-6">
-      <div class="rounded-2xl bg-white p-6 shadow-lg">
-        <HarmonyColors :color="currentColor" />
-      </div>
-    </div>
+    <Card>
+      <HarmonyColors :color="currentColor" />
+    </Card>
+
     <!-- 颜色格式显示 -->
-    <div class="col-span-6">
-      <div class="rounded-2xl bg-white p-6 shadow-lg">
-        <ColorFormats v-model="currentColor" />
-      </div>
-    </div>
+
+    <Card>
+      <ColorFormats v-model="currentColor" />
+    </Card>
+
     <!-- 操作栏 -->
-    <div class="col-span-6">
-      <div class="rounded-2xl bg-white p-6 shadow-lg">
-        <div class="flex items-center space-x-4">
-          <label class="flex cursor-pointer items-center space-x-2">
-            <input
-              :value="config.removeHash"
-              @input="($event: any) => config.$patch({ removeHash: $event.target.checked })"
-              type="checkbox"
-              class="rounded text-blue-600"
-            />
-            <span class="text-sm text-gray-700">色值去 "#"</span>
-          </label>
-        </div>
+    <Card>
+      <div class="flex items-center space-x-4">
+        <label class="flex cursor-pointer items-center space-x-2">
+          <input
+            :value="config.removeHash"
+            @input="($event: any) => config.$patch({ removeHash: $event.target.checked })"
+            type="checkbox"
+            class="rounded text-blue-600"
+          />
+          <span class="text-sm">色值去 "#"</span>
+        </label>
       </div>
-    </div>
+    </Card>
   </div>
 </template>

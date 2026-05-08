@@ -133,7 +133,7 @@ function handleBlur() {
 </script>
 <template>
   <div class="flex items-center space-x-2">
-    <label class="w-16 text-sm font-medium text-gray-700">{{ flag.toUpperCase() }}</label>
+    <label class="w-16 text-sm font-medium">{{ flag.toUpperCase() }}</label>
     <input
       v-for="(item, index) in localValues"
       :key="index"
@@ -145,7 +145,7 @@ function handleBlur() {
     />
     <button
       @click="copyColor(getCopyString())"
-      class="grow-0 p-1 text-gray-500 hover:text-gray-700"
+      class="grow-0 p-1 transition-transform duration-200 hover:scale-105"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
