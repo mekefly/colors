@@ -28,13 +28,14 @@ onMounted(() => {
 watch(
   () => props.modelValue.toHsv(),
   (newHsv, oldHsv) => {
-    // 只在色相或饱和度变化时重绘色轮（亮度变化不需要重绘整个色轮）
-    if (oldHsv && (newHsv.h !== oldHsv.h || newHsv.s !== oldHsv.s)) {
-      updatePickerPosition();
-      drawColorWheel();
-    } else if (!oldHsv) {
-      // 初始化时绘制
-      updatePickerPosition();
+    //根据颜色变化更新位置选点
+    updatePickerPosition();
+
+    if (
+      // 亮度更新时更新色轮
+      oldHsv &&
+      newHsv.v !== oldHsv.v
+    ) {
       drawColorWheel();
     }
   },
@@ -172,12 +173,9 @@ const handleMouseUp = () => {
 
 onMounted(() => {
   drawColorWheel();
-  window.addEventListener("mouseup", handleMouseUp);
 });
 
-onUnmounted(() => {
-  window.removeEventListener("mouseup", handleMouseUp);
-});
+useEventListener(window, "mouseup", handleMouseUp, { passive: true });
 useEventListener(window, "mousemove", handleMouseMove, { passive: true });
 </script>
 
