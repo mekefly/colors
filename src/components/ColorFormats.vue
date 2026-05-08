@@ -10,7 +10,7 @@ const message = useMessage();
 const { addFavorite } = useFavorites();
 let color = defineModel<Colord>({ required: true });
 
-const formats = ["hex", "rgb", "hsv/hsb", "hsl"] as const;
+const formats = ["hex", "rgb", "hsv/hsb", "hsl", "hwb", "cmyk", "lab", "lch", "xyz"] as const;
 
 // 添加到收藏
 const addToFavorites = () => {

@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { Colord, colord } from "colord";
+import { Colord, colord, extend } from "colord";
+import cmykPlugin from "colord/plugins/cmyk";
+import hwbPlugin from "colord/plugins/hwb";
+import labPlugin from "colord/plugins/lab";
+import lchPlugin from "colord/plugins/lch";
+import xyzPlugin from "colord/plugins/xyz";
+extend([hwbPlugin, cmykPlugin, labPlugin, lchPlugin, xyzPlugin]);
 import { computed, ref, watch } from "vue";
 import { colordToHsvString } from "@/utils/color";
 import { useCounterStore } from "@/utils/config";
 import { copyColor } from "@/utils/copy";
 
 interface Props {
-  flag: "hsl" | "hsv/hsb" | "hex" | "rgb";
+  flag: "hsl" | "hsv/hsb" | "hex" | "rgb" | "hwb" | "cmyk" | "lab" | "lch" | "xyz";
 }
 
 const { flag } = defineProps<Props>();
@@ -34,6 +40,30 @@ function toInputValue(colorObj: Colord): (string | number)[] {
     case "rgb": {
       const rgb = colorObj.toRgb();
       return [rgb.r, rgb.g, rgb.b];
+    }
+    case "hwb": {
+      const hwb = colorObj.toHwb();
+      return [Math.round(hwb.h), Math.round(hwb.w), Math.round(hwb.b)];
+    }
+    case "cmyk": {
+      const cmyk = colorObj.toCmyk();
+      return [Math.round(cmyk.c), Math.round(cmyk.m), Math.round(cmyk.y), Math.round(cmyk.k)];
+    }
+    case "lab": {
+      const lab = colorObj.toLab();
+      return [Math.round(lab.l), Math.round(lab.a), Math.round(lab.b)];
+    }
+    case "lch": {
+      const lch = colorObj.toLch();
+      return [Math.round(lch.l), Math.round(lch.c), Math.round(lch.h)];
+    }
+    case "xyz": {
+      const xyz = colorObj.toXyz();
+      return [
+        Math.round(xyz.x * 100) / 100,
+        Math.round(xyz.y * 100) / 100,
+        Math.round(xyz.z * 100) / 100,
+      ];
     }
   }
 }
@@ -70,6 +100,47 @@ function inputValuesToColor(values: (string | number)[]): Colord | null {
           r: Number(values[0]),
           g: Number(values[1]),
           b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "hwb": {
+        const c = colord({
+          h: Number(values[0]),
+          w: Number(values[1]),
+          b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "cmyk": {
+        const c = colord({
+          c: Number(values[0]),
+          m: Number(values[1]),
+          y: Number(values[2]),
+          k: Number(values[3]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "lab": {
+        const c = colord({
+          l: Number(values[0]),
+          a: Number(values[1]),
+          b: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "lch": {
+        const c = colord({
+          l: Number(values[0]),
+          c: Number(values[1]),
+          h: Number(values[2]),
+        });
+        return c.isValid() ? c : null;
+      }
+      case "xyz": {
+        const c = colord({
+          x: Number(values[0]) / 100,
+          y: Number(values[1]) / 100,
+          z: Number(values[2]) / 100,
         });
         return c.isValid() ? c : null;
       }
@@ -123,6 +194,17 @@ function getCopyString(): string {
       return config.removeHash ? color.value.toHex().substring(1) : color.value.toHex();
     case "rgb":
       return color.value.toRgbString();
+    case "hwb":
+      return color.value.toHwbString();
+    case "cmyk":
+      return color.value.toCmykString();
+    case "lab":
+      return `lab(${color.value.toLab().l.toFixed(0)} ${color.value.toLab().a.toFixed(0)} ${color.value.toLab().b.toFixed(0)})`;
+    case "lch":
+      return `lch(${color.value.toLch().l.toFixed(0)} ${color.value.toLch().c.toFixed(0)} ${color.value.toLch().h.toFixed(0)})`;
+    case "xyz":
+      const xyz = color.value.toXyz();
+      return `xyz(${(xyz.x * 100).toFixed(2)} ${(xyz.y * 100).toFixed(2)} ${(xyz.z * 100).toFixed(2)})`;
   }
 }
 function handleBlur() {
