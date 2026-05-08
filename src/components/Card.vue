@@ -5,13 +5,15 @@ const currentColorStore = useCurrentColor();
 <template>
   <div class="col-span-6 space-y-6">
     <div
-      class="rounded-2xl bg-white p-6 shadow-lg transition-colors duration-500 ease-in-out"
+      class="rounded-2xl p-6 shadow-lg"
       :style="{
         backgroundColor: currentColorStore.currentColor.toHex(),
         color: currentColorStore.currentColor.isDark() ? '#FFFFFF' : '#000000',
       }"
     >
-      <slot></slot>
+      <div class="transition-colors duration-500 ease-in-out">
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>
