@@ -138,9 +138,9 @@ function inputValuesToColor(values: (string | number)[]): Colord | null {
       }
       case "xyz": {
         const c = colord({
-          x: Number(values[0]) / 100,
-          y: Number(values[1]) / 100,
-          z: Number(values[2]) / 100,
+          x: Number(values[0]),
+          y: Number(values[1]),
+          z: Number(values[2]),
         });
         return c.isValid() ? c : null;
       }
