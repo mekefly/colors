@@ -6,7 +6,7 @@
       <slot name="header"></slot>
     </div>
     <!-- 主要内容区域 -->
-    <div class="flex-1 overflow-auto p-6">
+    <div class="scrollbar-hide flex-1 overflow-auto p-6">
       <div class="mx-auto max-w-7xl">
         <slot></slot>
       </div>
