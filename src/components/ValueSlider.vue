@@ -26,12 +26,17 @@ const value = computed({
 // 计算渐变背景
 const gradient = computed(() => {
   const hsv = props.modelValue.toHsv();
-  const start = colord({ ...hsv, v: 0 }).toHslString();
-  const end = colord({ ...hsv, v: 100 }).toHslString();
-  return `linear-gradient(to right, ${start}, ${end})`;
+  const colors = [0, 100].map((v) => colord({ ...hsv, v }).toHslString());
+  return `linear-gradient(to right, ${colors.join(", ")})`;
 });
 </script>
 
 <template>
-  <Slider v-model="value" :min="0" :max="100" :step="1" :background="gradient" enable-wheel />
+  <div class="flex items-center space-x-3">
+    <span class="w-8 text-sm font-medium">V</span>
+    <div class="flex-1">
+      <Slider v-model="value" :min="0" :max="100" :step="1" :background="gradient" enable-wheel />
+    </div>
+    <span class="w-10 text-right text-sm">{{ Math.round(value) }}%</span>
+  </div>
 </template>

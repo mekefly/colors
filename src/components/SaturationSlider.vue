@@ -26,12 +26,24 @@ const saturation = computed({
 // 计算渐变背景
 const gradient = computed(() => {
   const hsv = props.modelValue.toHsv();
-  const start = colord({ ...hsv, s: 0 }).toHslString();
-  const end = colord({ ...hsv, s: 100 }).toHslString();
-  return `linear-gradient(to right, ${start}, ${end})`;
+  const colors = [0, 100].map((s) => colord({ ...hsv, s }).toHslString());
+  return `linear-gradient(to right, ${colors.join(", ")})`;
 });
 </script>
 
 <template>
-  <Slider v-model="saturation" :min="0" :max="100" :step="1" :background="gradient" enable-wheel />
+  <div class="flex items-center space-x-3">
+    <span class="w-8 text-sm font-medium">S</span>
+    <div class="flex-1">
+      <Slider
+        v-model="saturation"
+        :min="0"
+        :max="100"
+        :step="1"
+        :background="gradient"
+        enable-wheel
+      />
+    </div>
+    <span class="w-10 text-right text-sm">{{ Math.round(saturation) }}%</span>
+  </div>
 </template>
