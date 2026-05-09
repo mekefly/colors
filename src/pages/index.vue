@@ -4,6 +4,7 @@ import { ref } from "vue";
 import Card from "@/components/Card.vue";
 import ColorFormats from "@/components/ColorFormats.vue";
 import ColorWheel from "@/components/ColorWheel.vue";
+import Config from "@/components/Config.vue";
 import HarmonyColors from "@/components/HarmonyColors.vue";
 import HSLSliders from "@/components/HSLSliders.vue";
 import HueSlider from "@/components/HueSlider.vue";
@@ -11,7 +12,7 @@ import RGBSliders from "@/components/RGBSliders.vue";
 import SaturationSlider from "@/components/SaturationSlider.vue";
 import Space from "@/components/Space.vue";
 import ValueSlider from "@/components/ValueSlider.vue";
-import { useCounterStore } from "@/utils/config";
+import { useConfigStore } from "@/utils/config";
 import { useCurrentColor } from "@/utils/current-color";
 
 const currentColorStore = useCurrentColor();
@@ -19,7 +20,6 @@ const currentColor = computed({
   get: () => currentColorStore.currentColor,
   set: (value) => currentColorStore.setCurrentColor(value),
 });
-const config = useCounterStore();
 </script>
 <template>
   <!-- 取色器页面 -->
@@ -66,17 +66,7 @@ const config = useCounterStore();
     <!-- 操作栏 -->
     <Space>
       <Card>
-        <div class="flex items-center space-x-4">
-          <label class="flex cursor-pointer items-center space-x-2">
-            <input
-              :value="config.removeHash"
-              @input="($event: any) => config.$patch({ removeHash: $event.target.checked })"
-              type="checkbox"
-              class="rounded text-blue-600"
-            />
-            <span class="text-sm">色值去 "#"</span>
-          </label>
-        </div>
+        <Config />
       </Card>
     </Space>
   </div>

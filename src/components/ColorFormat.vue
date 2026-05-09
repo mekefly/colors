@@ -8,15 +8,15 @@ import xyzPlugin from "colord/plugins/xyz";
 extend([hwbPlugin, cmykPlugin, labPlugin, lchPlugin, xyzPlugin]);
 import { computed, ref, watch } from "vue";
 import { colordToHsvString } from "@/utils/color";
-import { useCounterStore } from "@/utils/config";
-import { copyColor, copyColor2 } from "@/utils/copy";
+import { useConfigStore } from "@/utils/config";
+import { copyColor2 } from "@/utils/copy";
 
 interface Props {
   flag: "hsl" | "hsv/hsb" | "hex" | "rgb" | "hwb" | "cmyk" | "lab" | "lch" | "xyz";
 }
 
 const { flag } = defineProps<Props>();
-const config = useCounterStore();
+const config = useConfigStore();
 const color = defineModel<Colord>({ required: true });
 
 // 用户正在输入的标志

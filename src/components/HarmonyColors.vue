@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Colord } from "colord";
 import { computed } from "vue";
-import { useCounterStore } from "@/utils/config";
-import { copyColor } from "@/utils/copy";
+import { colordToString } from "@/utils/color";
+import { useConfigStore } from "@/utils/config";
+import { copyColor2 } from "@/utils/copy";
 import { useMessage } from "@/utils/message";
 
 interface Props {
@@ -13,9 +14,9 @@ const props = defineProps<Props>();
 
 interface HarmonyColor {
   label: string;
-  colors: string[];
+  colors: Colord[];
 }
-const config = useCounterStore();
+const config = useConfigStore();
 const message = useMessage();
 
 const harmonyColors = computed<HarmonyColor[]>(() => {
@@ -25,25 +26,24 @@ const harmonyColors = computed<HarmonyColor[]>(() => {
   return [
     {
       label: "互补色",
-      colors: [color.rotate(180).toHex()],
+      colors: [color.rotate(180)],
     },
     {
       label: "对比色",
-      colors: [color.rotate(150).toHex(), color.rotate(210).toHex()],
+      colors: [color.rotate(150), color.rotate(210)],
     },
     {
       label: "类似色",
-      colors: [color.rotate(-30).toHex(), color.rotate(30).toHex()],
+      colors: [color.rotate(-30), color.rotate(30)],
     },
     {
       label: "中差色",
-      colors: [color.rotate(90).toHex(), color.rotate(-90).toHex(), color.rotate(180).toHex()],
+      colors: [color.rotate(90), color.rotate(-90), color.rotate(180)],
     },
   ];
 });
-function copyColorWithConfig(hex: string) {
-  if (config.removeHash) hex = hex.substring(1);
-  copyColor(hex);
+function handleCopy(color: Colord) {
+  copyColor2(color, { ...config });
 }
 </script>
 
@@ -59,13 +59,13 @@ function copyColorWithConfig(hex: string) {
         >
           <div
             class="h-10 w-10 rounded-lg border border-[color:var(--color)] shadow-md transition-transform hover:scale-105"
-            :style="{ backgroundColor: c }"
-            @click="copyColorWithConfig(c)"
+            :style="{ backgroundColor: c.toHex() }"
+            @click="handleCopy(c)"
           />
           <div
             class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100"
           >
-            {{ c }}
+            {{ colordToString(c, config) }}
           </div>
         </div>
       </div>
