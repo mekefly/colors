@@ -9,7 +9,7 @@ extend([hwbPlugin, cmykPlugin, labPlugin, lchPlugin, xyzPlugin]);
 import { computed, ref, watch } from "vue";
 import { colordToHsvString } from "@/utils/color";
 import { useCounterStore } from "@/utils/config";
-import { copyColor } from "@/utils/copy";
+import { copyColor, copyColor2 } from "@/utils/copy";
 
 interface Props {
   flag: "hsl" | "hsv/hsb" | "hex" | "rgb" | "hwb" | "cmyk" | "lab" | "lch" | "xyz";
@@ -181,39 +181,13 @@ function handleInputChange(index: number, value: string) {
   }
 }
 
-/**
- * 获取用于复制的字符串表示
- */
-function getCopyString(): string {
-  switch (flag) {
-    case "hsl":
-      return color.value.toHslString();
-    case "hsv/hsb":
-      return colordToHsvString(color.value);
-    case "hex":
-      let hex = color.value.toHex();
-      return config.removeHash ? hex.substring(1) : hex;
-    case "rgb":
-      return color.value.toRgbString();
-    case "hwb":
-      return color.value.toHwbString();
-    case "cmyk":
-      return color.value.toCmykString();
-    case "lab":
-      const lab = color.value.toLab();
-      return `lab(${lab.l.toFixed(0)} ${lab.a.toFixed(0)} ${lab.b.toFixed(0)})`;
-    case "lch":
-      const lch = color.value.toLch();
-      return `lch(${lch.l.toFixed(0)} ${lch.c.toFixed(0)} ${lch.h.toFixed(0)})`;
-    case "xyz":
-      const xyz = color.value.toXyz();
-      return `xyz(${xyz.x.toFixed(2)} ${xyz.y.toFixed(2)} ${xyz.z.toFixed(2)})`;
-  }
-}
 function handleBlur() {
   inputting.value = false;
   // 当停止输入后，将本地值更新到合法值
   updateLocalValues(displayValues.value);
+}
+function handleCopy() {
+  copyColor2(color.value, { ...config, format: flag });
 }
 </script>
 <template>
@@ -229,7 +203,7 @@ function handleBlur() {
       class="min-w-[0px] flex-1 rounded border border-gray-300 px-3 py-1 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
     />
     <button
-      @click="copyColor(getCopyString())"
+      @click="handleCopy"
       class="grow-0 p-1 transition-transform duration-200 hover:scale-105"
     >
       <svg

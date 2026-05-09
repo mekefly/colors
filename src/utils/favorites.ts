@@ -86,7 +86,7 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
     }
 
     const newFavorite: ColorFavorite = {
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+      id: Date.now().toString(36) + Math.random().toString(36).substring(2),
       color,
       tags,
       createdAt: Date.now(),
