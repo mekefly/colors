@@ -185,7 +185,7 @@ useEventListener(window, "mousemove", handleMouseMove, { passive: true });
       ref="canvasRef"
       width="200"
       height="200"
-      class="cursor-crosshair rounded-full outline-2 outline-[color:var(--color)]"
+      class="cursor-crosshair rounded-full outline-2 outline-[color:currentColor]"
       @mousedown="handleMouseDown"
     />
     <div

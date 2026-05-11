@@ -58,7 +58,7 @@ function handleCopy(color: Colord) {
           class="group relative cursor-pointer"
         >
           <div
-            class="h-10 w-10 rounded-lg border border-[color:var(--color)] shadow-md transition-transform hover:scale-105"
+            class="h-10 w-10 rounded-lg border border-[color:currentColor] shadow-md transition-transform hover:scale-105"
             :style="{ backgroundColor: c.toHex() }"
             @click="handleCopy(c)"
           />
