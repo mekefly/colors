@@ -1,3 +1,5 @@
+import { Colord } from "colord";
+import { colordToString, ColorToStringOptions } from "./color";
 import { useMessage } from "./message";
 
 export const copyColor = async (text: string) => {
@@ -9,4 +11,9 @@ export const copyColor = async (text: string) => {
     console.error("复制失败:", err);
     message.error("复制失败");
   }
+};
+export const copyColor2 = async (color: Colord, options?: ColorToStringOptions) => {
+  const colorText = colordToString(color, options);
+
+  copyColor(colorText);
 };

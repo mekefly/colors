@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Colord } from "colord";
-import { computed } from "vue";
-import { copyColor } from "@/utils/copy";
 import { useMessage } from "@/utils/message";
 import { useFavorites } from "../utils/favorites";
 import ColorFormat from "./ColorFormat.vue";

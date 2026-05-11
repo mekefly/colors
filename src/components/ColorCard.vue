@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { colord } from "colord";
 import { computed } from "vue";
+import { useConfigStore } from "@/utils/config";
 import { useTagsEditing, type ColorFavorite } from "@/utils/favorites";
-import { copyColor } from "../utils/copy";
+import { copyColor2 } from "../utils/copy";
 import Tags from "./tags.vue";
 
 const editing = useTagsEditing();
+const config = useConfigStore();
 
 interface Props {
   favorite: ColorFavorite;
@@ -19,6 +22,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const tags = computed(() => props.favorite.tags ?? []);
+const handleCopy = () => copyColor2(colord(props.favorite.color), config);
 </script>
 
 <template>
@@ -27,7 +31,7 @@ const tags = computed(() => props.favorite.tags ?? []);
     <div
       class="relative aspect-square cursor-pointer p-2"
       :style="{ backgroundColor: favorite.color }"
-      @click="copyColor(favorite.color)"
+      @click="handleCopy"
       title="点击复制颜色值"
     >
       <!-- 标签 -->
