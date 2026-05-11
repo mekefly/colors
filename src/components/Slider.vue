@@ -213,7 +213,7 @@ if (props.enableWheel) {
 <template>
   <div
     ref="sliderRef"
-    :class="['relative h-6 cursor-pointer rounded-full p-0 outline  outline-[color:var(--color)]']"
+    :class="['relative h-6 cursor-pointer rounded-full p-0 outline  outline-[color:currentColor]']"
     :style="{ background: background }"
     @mousedown.prevent="handleMouseDown"
   >
