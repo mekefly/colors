@@ -46,12 +46,10 @@ const currentColor = computed({
     </Space>
     <!-- RGB 滑块 -->
     <Space>
-      <Card>
-        <h3 class="mb-4 text-lg font-semibold">RGB 滑块</h3>
+      <Card title="RGB">
         <RGBSliders v-model="currentColor" />
       </Card>
-      <Card>
-        <h3 class="mb-4 text-lg font-semibold">HSL 滑块</h3>
+      <Card title="HSL">
         <HSLSliders v-model="currentColor" />
       </Card>
     </Space>
@@ -65,7 +63,7 @@ const currentColor = computed({
 
     <!-- 操作栏 -->
     <Space>
-      <Card>
+      <Card title="选项">
         <Config />
       </Card>
     </Space>

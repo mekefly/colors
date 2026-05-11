@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useCurrentColor } from "@/utils/current-color";
+
+defineProps<{ title?: string }>();
 const currentColorStore = useCurrentColor();
 </script>
 <template>
@@ -10,7 +12,8 @@ const currentColorStore = useCurrentColor();
       color: currentColorStore.currentColor.isDark() ? '#FFFFFF' : '#000000',
     }"
   >
-    <div class="w-full transition-colors duration-500 ease-in-out">
+    <div class="w-full transition-[color] duration-500 ease-in-out">
+      <h3 v-if="title" class="mb-4 text-lg font-semibold">{{ title }}</h3>
       <slot></slot>
     </div>
   </div>
