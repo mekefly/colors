@@ -1,18 +1,13 @@
 <script lang="ts" setup>
-import { computed } from "vue";
+import { useCurrentColor } from "@/utils/current-color";
 
 interface Props {
   modelValue: boolean;
-  backgroundColor?: string;
 }
-
-import { useCurrentColor } from "@/utils/current-color";
 
 const currentColorStore = useCurrentColor();
 
-const props = withDefaults(defineProps<Props>(), {
-  backgroundColor: "currentColor",
-});
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -21,22 +16,6 @@ const emit = defineEmits<{
 const toggle = () => {
   emit("update:modelValue", !props.modelValue);
 };
-
-const bgColorStyle = computed(() => {
-  // 如果是颜色值（以 # 开头或包含 rgb/hsl），直接使用
-  if (props.backgroundColor.startsWith("#") || props.backgroundColor.includes("(")) {
-    return { backgroundColor: props.backgroundColor };
-  }
-  // 否则作为 CSS 变量或关键字使用
-  return {};
-});
-
-const bgColorClass = computed(() => {
-  if (props.backgroundColor.startsWith("#") || props.backgroundColor.includes("(")) {
-    return "";
-  }
-  return `bg-[color:${props.backgroundColor}]`;
-});
 </script>
 
 <template>
