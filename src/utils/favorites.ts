@@ -1,11 +1,14 @@
 /**
  * 颜色收藏管理工具
- * 使用 localStorage 持久化存储收藏的颜色
+ *
+ * 数据库由 databases.ts 统一初始化，本模块不负责初始化。
+ * 使用前确保 databases.initAll() 已执行完成。
  */
 
 import { defineStore } from "pinia";
 import { computed, ref, watch, nextTick } from "vue";
-import zToolsApi from "./ztoolsapi";
+import type { DatabaseApi } from "./database";
+import { createDatabase } from "./database";
 
 export interface ColorFavorite {
   id: string;
@@ -14,19 +17,44 @@ export interface ColorFavorite {
   createdAt: number;
 }
 
-const STORAGE_KEY = "color-favorites";
+// ── 数据库引用 ──
+// 由 databases.ts 在 initAll() 完成后通过 setDatabase() 注入
+let favoritesDb: DatabaseApi<{ data: ColorFavorite[] }> | null = null;
+
+/**
+ * 注入已初始化的数据库实例
+ * 由 databases.ts 在 initAll() 后调用
+ */
+export function setDatabase(db: DatabaseApi<{ data: ColorFavorite[] }>): void {
+  favoritesDb = db;
+}
+export function createDB() {
+  return createDatabase<{ data: ColorFavorite[] }>({
+    id: "color-favorites",
+    initialData: { data: [] },
+    version: 1,
+  });
+  // .patch(1, ({ db }) => {
+  //   // v0 → v1 的迁移逻辑（如果有的话）
+  // });
+}
+
+/**
+ * 获取数据库实例
+ * 如果未初始化会抛出异常
+ */
+function getDb(): DatabaseApi<{ data: ColorFavorite[] }> {
+  if (!favoritesDb) {
+    throw new Error("[favorites] 数据库未初始化，请确保在 databases.initAll() 之后使用");
+  }
+  return favoritesDb;
+}
 
 /**
  * 获取所有收藏的颜色
  */
 export function getFavorites(): DbDoc<{ data: ColorFavorite[] }> {
-  try {
-    const data = zToolsApi.db.get<{ data: ColorFavorite[] }>(STORAGE_KEY);
-    return data ? data : { _id: STORAGE_KEY, data: [] };
-  } catch (error) {
-    console.error("读取收藏失败:", error);
-    throw new Error("读取收藏失败:" + error);
-  }
+  return getDb().getDoc();
 }
 
 /**
@@ -34,9 +62,8 @@ export function getFavorites(): DbDoc<{ data: ColorFavorite[] }> {
  */
 async function saveFavorites(favoritesDoc: DbDoc<{ data: ColorFavorite[] }>): Promise<void> {
   try {
-    const result = zToolsApi.db.put(JSON.parse(JSON.stringify(favoritesDoc)));
+    const result = getDb().saveDoc(JSON.parse(JSON.stringify(favoritesDoc)));
     if (result.ok) {
-      // 更新 _rev，用于下次保存（直接修改原对象以保持引用一致性）
       favoritesDoc._rev = result.rev;
       console.log("已保存收藏", favoritesDoc);
     } else if (result.error) {
@@ -48,7 +75,8 @@ async function saveFavorites(favoritesDoc: DbDoc<{ data: ColorFavorite[] }>): Pr
     throw new Error("保存收藏失败:" + error);
   }
 }
-export const useFavorites = defineStore(STORAGE_KEY, () => {
+
+export const useFavorites = defineStore("color-favorites", () => {
   const doc = ref(getFavorites());
   const value = computed({
     get: () => doc.value.data,
@@ -63,23 +91,19 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
   watch(
     doc,
     async (newValue) => {
-      // 如果正在保存中，跳过此次触发（避免 _rev 更新导致的递归）
       if (isSaving) return;
-
       isSaving = true;
       try {
-        // 创建纯对象副本，保留 _rev 字段以避免数据库冲突
         await saveFavorites(newValue);
       } finally {
-        // 使用 nextTick 确保在下一个 tick 才允许再次保存
         await nextTick();
         isSaving = false;
       }
     },
     { deep: true },
   );
+
   const addFavorite = (color: string, tags: string[] = []) => {
-    // 检查是否已存在
     const exists = value.value.find((f) => f.color === color);
     if (exists) {
       throw new Error("该颜色已在收藏中");
@@ -96,16 +120,13 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
   };
 
   const removeFavorite = (id: string) => {
-    const filtered = value.value.filter((f) => f.id !== id);
-    console.log("filtered", filtered);
-
-    value.value = filtered;
+    value.value = value.value.filter((f) => f.id !== id);
   };
 
   const removeColor = (color: string) => {
-    const filtered = value.value.filter((f) => f.color !== color);
-    value.value = filtered;
+    value.value = value.value.filter((f) => f.color !== color);
   };
+
   const addTag = (id: string, tag: string) => {
     const favorite = value.value.find((f) => f.id === id);
     if (!favorite) {
@@ -126,13 +147,16 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
     if (favorite.tags.includes(tag)) {
       throw new Error("该标签已存在");
     }
+
     favorite.tags.push(tag);
   };
+
   const getById = (id: string) => {
     return value.value.find((f) => f.id === id) || null;
   };
+
   const toggleTag = (id: string, tag: string) => {
-    let favorite = getById(id);
+    const favorite = getById(id);
     if (!favorite) {
       throw new Error("收藏不存在");
     }
@@ -146,6 +170,7 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
   return {
     value,
     addFavorite,
+    addColor: addFavorite,
     removeColor,
     removeFavorite,
     addTag,
@@ -154,9 +179,9 @@ export const useFavorites = defineStore(STORAGE_KEY, () => {
     toggleTag,
   };
 });
-export const useAllTags = defineStore("all-tags", () => {
-  let favorites = useFavorites();
 
+export const useAllTags = defineStore("all-tags", () => {
+  const favorites = useFavorites();
   const value = computed((): string[] => {
     const tagSet = new Set<string>();
     favorites.value.forEach((favorite) => {
@@ -164,10 +189,12 @@ export const useAllTags = defineStore("all-tags", () => {
     });
     return Array.from(tagSet).sort();
   });
+
   return {
     value,
   };
 });
+
 export const useTagFilter = defineStore("tag-filter", () => {
   const favorites = useFavorites();
   const selectedTags = ref<string[]>([]);
@@ -182,12 +209,15 @@ export const useTagFilter = defineStore("tag-filter", () => {
     }
     selectedTags.value.push(tag);
   };
+
   const remove = (tag: string) => {
     selectedTags.value = selectedTags.value.filter((t) => t !== tag);
   };
+
   const clear = () => {
     selectedTags.value = [];
   };
+
   return {
     selectedTags,
     filteredFavorites,
@@ -212,8 +242,7 @@ export function filterFavoritesByTags(
 }
 
 export const useTagsEditing = defineStore("tags-editing", () => {
-  let favorites = useFavorites();
-  // 编辑状态
+  const favorites = useFavorites();
   const favoriteId = ref<string | null>(null);
   const editingTags = computed(() => {
     return favoriteId.value ? (favorites.getById(favoriteId.value)?.tags ?? null) : [];
@@ -223,18 +252,22 @@ export const useTagsEditing = defineStore("tags-editing", () => {
   const startEditing = (id: string) => {
     favoriteId.value = id;
   };
+
   const color = computed(() => {
     return favoriteId.value ? favorites.getById(favoriteId.value)?.color : null;
   });
+
   const addTag = (tag: string) => {
     if (!favoriteId.value) {
       throw new Error("请选择要编辑的收藏");
     }
     favorites.addTag(favoriteId.value, tag);
   };
+
   const back = () => {
     favoriteId.value = null;
   };
+
   const toggleTag = (tag: string) => {
     if (!favoriteId.value) throw new Error("请选择要编辑的收藏");
 
