@@ -99,15 +99,17 @@ export type DatabaseBuilder<T extends Record<string, any> = Record<string, any>>
     version: number,
     handler: (context: DatabaseMigrationContext<T>) => Promise<void> | void,
   ): DatabaseBuilder<T>;
-  /** 检查当前数据库是否需要迁移（不执行迁移） */
-  needsMigration(): boolean;
-  /** 获取数据库迁移信息：当前版本、目标版本、是否需要迁移 */
-  getMigrationInfo(): DatabaseMigrationInfo;
-  /** 构建并执行迁移，返回可用的数据库 API */
-  build(): Promise<DatabaseApi<T>>;
+  /** 构建数据库 API（不执行迁移，只确保文档存在） */
+  build(): DatabaseApi<T>;
+  /** 检查数据库当前状态 */
+  checkStatus(): DatabaseMigrationStatus;
+  /** 获取版本信息（当前版本、目标版本） */
+  getVersionInfo(): { currentVersion: number; targetVersion: number };
+  /** 执行迁移（含锁检测、回滚、版本校验） */
+  migrate(): Promise<void>;
 };
 
-/** 数据库迁移信息 */
+/** 数据库迁移信息（版本对比） */
 export type DatabaseMigrationInfo = {
   /** 数据库标识符 */
   id: string;
@@ -118,6 +120,14 @@ export type DatabaseMigrationInfo = {
   /** 是否需要迁移 */
   needsMigration: boolean;
 };
+
+/** 数据库状态 */
+export type DatabaseMigrationStatus =
+  | { status: "ok" }                    // 版本一致，无需操作
+  | { status: "needs_migration" }        // 需要迁移
+  | { status: "interrupted" }            // 上次迁移被中断，需要先回滚
+  | { status: "corrupted" }             // 锁存在但备份丢失，数据可能损坏
+  | { status: "new" };                   // 全新数据库
 
 // ============================================================================
 // 工具函数
@@ -467,105 +477,144 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
     },
 
     /**
-     * 检查当前数据库是否需要迁移
-     * 只读取版本号做比较，不执行任何迁移操作
+     * 构建数据库 API
+     * 验证数据库状态正常后返回：
+     *   - 文档不存在 → 创建初始文档（版本 0）
+     *   - 有迁移锁 → 报错（需要先 migrate() 回滚）
+     *   - 版本号不匹配 → 报错（需要先 migrate() 升级）
+     *   - 全部正常 → 返回可用的数据库 API
      */
-    needsMigration() {
-      const database = createDatabaseApi(dataId, options.initialData);
-      const currentVersion = database.getVersion();
-      return currentVersion !== targetVersion;
-    },
-
-    /**
-     * 获取数据库迁移信息
-     * 返回当前版本、目标版本、是否需要迁移
-     */
-    getMigrationInfo(): DatabaseMigrationInfo {
-      const database = createDatabaseApi(dataId, options.initialData);
-      const currentVersion = database.getVersion();
-      return {
-        id: dataId,
-        currentVersion,
-        targetVersion,
-        needsMigration: currentVersion !== targetVersion,
-      };
-    },
-
-    /**
-     * 构建数据库并执行迁移
-     * 这是整个迁移流程的入口点
-     */
-    async build() {
+    build() {
       const database = createDatabaseApi(dataId, options.initialData);
 
       // 全新数据库：写入初始数据文档（含 __version: 0）
       const existingDoc = loadDocument<T>(dataId);
       if (!existingDoc) {
         saveDocument(createDefaultDocument(dataId, options.initialData));
-      }
-
-      // ── 检测中断迁移 ──
-      // 如果检测到 __locked，会从 __backup 回滚，文档版本号可能已变
-      detectingInterruptMigration(dataId, database);
-
-      // ── 回滚后重新读取版本号 ──
-      // rollbackDatabase 可能已经改变了文档状态，必须重新读取
-      const currentVersion = database.getVersion();
-
-      // ── 版本号没变，无需迁移 ──
-      if (targetVersion === currentVersion) {
+        // 新数据库版本为 0，如果 targetVersion > 0 需要迁移
+        if (targetVersion > 0) {
+          throw new Error(
+            `[database:${dataId}] 全新数据库需要迁移到 v${targetVersion}，请先调用 migrate()。`,
+          );
+        }
         return database;
       }
 
-      // ── 数据库迁移 ──
-      return runMigrations(database, dataId, currentVersion, targetVersion, patches);
+      // 检查状态
+      const status = this.checkStatus();
+
+      if (status.status === "interrupted") {
+        throw new Error(
+          `[database:${dataId}] 上次迁移被中断，请先调用 migrate() 回滚后重试。`,
+        );
+      }
+
+      if (status.status === "corrupted") {
+        throw new Error(
+          `[database:${dataId}] 数据库状态损坏：迁移锁存在但备份丢失，需要手动恢复。`,
+        );
+      }
+
+      if (status.status === "needs_migration") {
+        const currentVersion = database.getVersion();
+        throw new Error(
+          `[database:${dataId}] 版本不匹配（当前 v${currentVersion}，目标 v${targetVersion}），请先调用 migrate()。`,
+        );
+      }
+
+      return database;
+    },
+
+    /**
+     * 检查数据库当前状态
+     * 只读取文档，不做任何修改
+     */
+    checkStatus(): DatabaseMigrationStatus {
+      const doc = loadDocument(dataId);
+
+      // 文档不存在 → 全新数据库
+      if (!doc) {
+        return { status: "new" };
+      }
+
+      const internals = getInternals(dataId);
+
+      // 有锁标记 → 上次迁移被中断
+      if (internals.locked) {
+        // 有备份可以回滚
+        if (internals.backup) {
+          return { status: "interrupted" };
+        }
+        // 锁存在但没有备份 → 数据损坏
+        return { status: "corrupted" };
+      }
+
+      // 检查版本号
+      const currentVersion = (doc[FIELD_VERSION] as number) ?? 0;
+      if (currentVersion === targetVersion) {
+        return { status: "ok" };
+      }
+
+      return { status: "needs_migration" };
+    },
+
+    /**
+     * 获取版本信息
+     */
+    getVersionInfo() {
+      const doc = loadDocument(dataId);
+      const currentVersion = (doc?.[FIELD_VERSION] as number) ?? 0;
+      return { currentVersion, targetVersion };
+    },
+
+    /**
+     * 执行数据库迁移
+     * 先检查状态，根据状态决定行为：
+     *   - interrupted → 先回滚，再迁移
+     *   - corrupted → 抛错，需要人工处理
+     *   - needs_migration → 直接迁移
+     *   - ok / new → 无操作
+     */
+    async migrate() {
+      const database = createDatabaseApi(dataId, options.initialData);
+      const status = this.checkStatus();
+
+      switch (status.status) {
+        case "ok":
+        case "new":
+          // 无需操作
+          return;
+
+        case "corrupted":
+          throw new Error(
+            `[database:${dataId}] 数据库状态损坏：迁移锁存在但备份丢失，需要手动恢复数据。`,
+          );
+
+        case "interrupted":
+          // 先回滚到备份状态
+          console.warn(`[database:${dataId}] 检测到上次迁移未完成，正在回滚...`);
+          const rollbackSuccess = restoreFromBackup(dataId);
+          if (!rollbackSuccess) {
+            throw new Error(
+              `[database:${dataId}] 回滚失败：备份不存在，数据可能已损坏。`,
+            );
+          }
+          console.warn(`[database:${dataId}] 回滚完成，继续执行迁移...`);
+          // 回滚后重新读取版本号
+          break;
+
+        case "needs_migration":
+          // 直接迁移
+          break;
+      }
+
+      // 执行迁移
+      const currentVersion = database.getVersion();
+      await runMigrations(database, dataId, currentVersion, targetVersion, patches);
     },
   };
 
   return builder;
-}
-
-/**
- *
- * ── 检测中断迁移 ──
- * 如果 __locked 存在，说明上次 build() 在迁移过程中被中断了
- * （可能是应用崩溃、用户强制关闭、或者进程被 kill）
- * 此时需要：从 __backup 回滚 → 清理 → 从恢复的版本重新迁移
- * @param dataId
- * @param database
- */
-function detectingInterruptMigration<T extends Record<string, any>>(
-  dataId: string,
-  database: DatabaseApi<T>,
-) {
-  const internals = getInternals(dataId);
-  if (internals.locked) {
-    rollbackDatabase(dataId, database);
-  }
-}
-
-/**
- *  ── 数据库回滚 ──
- * @param dataId
- * @param database
- */
-function rollbackDatabase<T extends Record<string, any>>(dataId: string, database: DatabaseApi<T>) {
-  console.warn(`[database:${dataId}] 检测到上次迁移未完成，正在回滚到迁移前的状态...`);
-
-  // 尝试从 __backup 恢复用户数据和版本号
-  const restored = restoreFromBackup(dataId);
-
-  // 恢复失败（__backup 不存在）→ 数据可能已损坏，需要人工干预
-  if (!restored) {
-    throw new Error(
-      `[database:${dataId}] 迁移被中断且未找到备份，数据可能已损坏。` + `需要手动恢复数据。`,
-    );
-  }
-
-  // 恢复成功 → 读取恢复后的版本号，从该版本重新开始迁移
-  // 注意：restoreFromBackup 已经去除了 __backup 和 __locked，无需再清理
-  const restoredVersion = database.getVersion();
-  console.warn(`[database:${dataId}] 已回滚到版本 ${restoredVersion}，正在重新执行迁移...`);
 }
 
 // ============================================================================

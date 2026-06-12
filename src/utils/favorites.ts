@@ -9,10 +9,17 @@ import { defineStore } from "pinia";
 import { computed, ref, watch, nextTick } from "vue";
 import type { DatabaseApi } from "./database";
 import { createDatabase } from "./database";
+export interface HexColor {
+  type: "hex";
+  hex: string;
+}
+export interface LinearGradient {
+  type: "linear-gradient";
+}
 
 export interface ColorFavorite {
   id: string;
-  color: string;
+  color: HexColor | LinearGradient;
   tags: string[];
   createdAt: number;
 }
@@ -28,12 +35,13 @@ let favoritesDb: DatabaseApi<{ data: ColorFavorite[] }> | null = null;
 export function setDatabase(db: DatabaseApi<{ data: ColorFavorite[] }>): void {
   favoritesDb = db;
 }
+
 export function createDB() {
   return createDatabase<{ data: ColorFavorite[] }>({
     id: "color-favorites",
     initialData: { data: [] },
     version: 1,
-  });
+  }).patch(1, ({ db }) => {});
   // .patch(1, ({ db }) => {
   //   // v0 → v1 的迁移逻辑（如果有的话）
   // });

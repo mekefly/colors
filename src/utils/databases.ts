@@ -1,84 +1,96 @@
 /**
- * 数据库统一初始化模块
+ * 数据库统一初始化
  *
- * 所有数据库在此集中定义和管理。
- * 使用流程：
- *   1. checkAll() — 检查所有数据库是否需要迁移（只读，不执行迁移）
- *   2. initAll()  — 初始化所有数据库（执行迁移，完成后注入到各模块）
+ * 一个 initDatabases() 返回所有需要的数据和方法，无全局状态：
  *
- * UI 层建议流程：
- *   loading → checkAll() → 需要迁移? → migration 页面 → initAll() → ready
- *                           不需要?   → initAll() → ready
+ *   const dbs = await initDatabases();
+ *   if (dbs.needsAction) { ... }
+ *   await dbs.migrate();
+ *   dbs.build();
  */
 
-import { createDatabase, type DatabaseMigrationInfo } from "./database";
+import { type DatabaseMigrationStatus, type DatabaseBuilder, type DatabaseApi } from "./database";
 import { createDB, setDatabase as setFavoritesDb } from "./favorites";
 
-// ============================================================================
-// 数据库定义
-// 在这里集中注册所有数据库，每个数据库包含名称和创建函数
-// ============================================================================
-
-interface DatabaseDefinition {
-  /** 数据库唯一标识 */
+/** 单个数据库的运行时状态 */
+interface DatabaseEntry {
   name: string;
-  /** 创建数据库 builder 的函数 */
-  create: () => ReturnType<typeof createDatabase>;
-  /** 初始化完成后，将数据库注入到对应模块 */
-  inject: (db: any) => void;
+  builder: DatabaseBuilder<any>;
+  status: DatabaseMigrationStatus;
+  currentVersion: number;
+  targetVersion: number;
+  inject: (db: DatabaseApi<any>) => void;
+}
+interface DatabaseBuilders<T extends Record<string, any> = Record<string, any>> {
+  name: string;
+  builder: () => DatabaseBuilder<T>;
+  inject: (db: DatabaseApi<T>) => void;
 }
 
-const databases: DatabaseDefinition[] = [
-  {
-    name: "color-favorites",
-    create: createDB,
-    inject: setFavoritesDb,
-  },
-  // 在这里添加更多数据库...
-  // {
-  //   name: "settings",
-  //   create: () => createDatabase<Settings>({ ... }),
-  //   inject: setSettingsDb,
-  // },
-];
-
-// ============================================================================
-// 检查与初始化
-// ============================================================================
-
-/**
- * 检查所有数据库是否需要迁移
- * 只读取版本号，不执行任何迁移操作
- * @returns 所有数据库的迁移信息列表
- */
-export function checkAll(): DatabaseMigrationInfo[] {
-  return databases.map((db) => db.create().getMigrationInfo());
-}
-
-/**
- * 检查是否有任何数据库需要迁移
- * @returns true 表示至少有一个数据库需要迁移
- */
-export function anyNeedsMigration(): boolean {
-  return databases.some((db) => db.create().needsMigration());
+/** initDatabases() 返回值 */
+export interface DatabaseManager {
+  /** 所有数据库条目 */
+  entries: DatabaseEntry[];
+  /** 是否有数据库需要处理 */
+  needsAction: boolean;
+  /** 需要处理的数据库列表 */
+  pending: DatabaseEntry[];
+  /** 执行所有迁移 */
+  migrate(): Promise<void>;
+  /** 构建所有数据库 API 并注入到各模块 */
+  build(): void;
 }
 
 /**
  * 初始化所有数据库
- * 按顺序执行每个数据库的 build()，执行必要的迁移
- * 完成后将数据库实例注入到各模块
- * 如果任何数据库初始化失败，会抛出异常
+ * 返回 DatabaseManager，包含状态和方法，无全局依赖
  */
-export async function initAll(): Promise<void> {
-  for (const db of databases) {
-    const built = await db.create().build();
-    db.inject(built);
-  }
-}
+export function initDatabases(): DatabaseManager {
+  // ── 创建 builders ──
+  const databaseBuilders: DatabaseBuilders<any>[] = [
+    {
+      name: "color-favorites",
+      builder: createDB,
+      inject: setFavoritesDb,
+    },
+    // 在这里添加更多数据库...
+  ];
+  let entries: DatabaseEntry[] = databaseBuilders.map((item) => {
+    // ── 检查状态 + 获取版本号 ──
+    let builder = item.builder();
+    const info = builder.getVersionInfo();
+    return {
+      name: item.name,
+      status: builder.checkStatus(),
+      currentVersion: info.currentVersion,
+      targetVersion: info.targetVersion,
+      builder,
+      inject: item.inject,
+    };
+  });
 
-/**
- * 获取所有数据库名称
- */
-export function getDatabaseNames(): string[] {
-  return databases.map((db) => db.name);
+  // ── 构造返回值 ──
+  const pending = entries.filter(
+    (e) => e.status.status === "needs_migration" || e.status.status === "interrupted",
+  );
+
+  return {
+    entries,
+    needsAction: pending.length > 0,
+    pending,
+
+    async migrate() {
+      for (const entry of entries) {
+        await entry.builder.migrate();
+      }
+    },
+
+    build() {
+      for (const entry of entries) {
+        const db = entry.builder.build();
+        // 注入到对应模块
+        entry.inject(db);
+      }
+    },
+  };
 }
