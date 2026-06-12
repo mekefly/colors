@@ -3,25 +3,75 @@
  *
  * 数据库由 databases.ts 统一初始化，本模块不负责初始化。
  * 使用前确保 databases.initAll() 已执行完成。
+ *
+ * 支持两种颜色类型：
+ *   - HexColor：纯色，存储 hex 值
+ *   - LinearGradient：线性渐变，存储方向 + 色标
  */
 
 import { defineStore } from "pinia";
 import { computed, ref, watch, nextTick } from "vue";
 import type { DatabaseApi } from "./database";
 import { createDatabase } from "./database";
+
+// ── 类型定义 ──
+
+/** 渐变色标 */
+export interface GradientStop {
+  /** hex 颜色值，如 "#FF0000" */
+  color: string;
+  /** 位置百分比 0-100，可选（不填则自动均匀分布） */
+  position?: number;
+}
+
+/** 纯色 */
 export interface HexColor {
   type: "hex";
   hex: string;
 }
+
+/** 线性渐变 */
 export interface LinearGradient {
   type: "linear-gradient";
+  /** CSS 方向，如 "to right"、"135deg" */
+  direction: string;
+  /** 色标列表，至少 2 个 */
+  stops: GradientStop[];
 }
 
+/** 收藏条目 */
 export interface ColorFavorite {
   id: string;
   color: HexColor | LinearGradient;
   tags: string[];
   createdAt: number;
+}
+
+// ── 颜色辅助函数 ──
+
+/** 将 HexColor | LinearGradient 转为 CSS 字符串（可用于 style 绑定） */
+export function colorToCSS(color: HexColor | LinearGradient): string {
+  if (color.type === "hex") return color.hex;
+  const stopsStr = color.stops
+    .map((s) => (s.position != null ? `${s.color} ${s.position}%` : s.color))
+    .join(", ");
+  return `linear-gradient(${color.direction}, ${stopsStr})`;
+}
+
+/** 获取颜色的显示文本 */
+export function colorToDisplay(color: HexColor | LinearGradient): string {
+  if (color.type === "hex") return color.hex;
+  return colorToCSS(color);
+}
+
+/** 判断两个颜色是否相同（基于 CSS 字符串比较） */
+export function colorEquals(a: HexColor | LinearGradient, b: HexColor | LinearGradient): boolean {
+  return colorToCSS(a) === colorToCSS(b);
+}
+
+/** 判断颜色值是否已存在于收藏列表中 */
+function isDuplicate(favorites: ColorFavorite[], color: HexColor | LinearGradient): boolean {
+  return favorites.some((f) => colorEquals(f.color, color));
 }
 
 // ── 数据库引用 ──
@@ -41,10 +91,17 @@ export function createDB() {
     id: "color-favorites",
     initialData: { data: [] },
     version: 1,
-  }).patch(1, ({ db }) => {});
-  // .patch(1, ({ db }) => {
-  //   // v0 → v1 的迁移逻辑（如果有的话）
-  // });
+  }).patch(1, ({ db }) => {
+    // v0 → v1：将旧的hex裸字符串颜色迁移为结构化 HexColor 对象
+    const doc = db.getDoc();
+    doc.data = doc.data.map((item) => {
+      if (typeof item.color === "string") {
+        return { ...item, color: { type: "hex", hex: item.color } as HexColor };
+      }
+      return item;
+    });
+    db.saveDoc(doc);
+  });
 }
 
 /**
@@ -111,9 +168,9 @@ export const useFavorites = defineStore("color-favorites", () => {
     { deep: true },
   );
 
-  const addFavorite = (color: string, tags: string[] = []) => {
-    const exists = value.value.find((f) => f.color === color);
-    if (exists) {
+  /** 添加收藏（纯色或渐变） */
+  const addFavorite = (color: HexColor | LinearGradient, tags: string[] = []) => {
+    if (isDuplicate(value.value, color)) {
       throw new Error("该颜色已在收藏中");
     }
 
@@ -131,8 +188,9 @@ export const useFavorites = defineStore("color-favorites", () => {
     value.value = value.value.filter((f) => f.id !== id);
   };
 
-  const removeColor = (color: string) => {
-    value.value = value.value.filter((f) => f.color !== color);
+  /** 按颜色值移除收藏（纯色或渐变均可） */
+  const removeColor = (color: HexColor | LinearGradient) => {
+    value.value = value.value.filter((f) => !colorEquals(f.color, color));
   };
 
   const addTag = (id: string, tag: string) => {
@@ -147,8 +205,9 @@ export const useFavorites = defineStore("color-favorites", () => {
     favorite.tags.push(tag);
   };
 
-  const addTagByColor = (color: string, tag: string) => {
-    const favorite = value.value.find((f) => f.color === color);
+  /** 按颜色值添加标签（纯色或渐变均可） */
+  const addTagByColor = (color: HexColor | LinearGradient, tag: string) => {
+    const favorite = value.value.find((f) => colorEquals(f.color, color));
     if (!favorite) {
       throw new Error("收藏不存在");
     }
@@ -262,7 +321,7 @@ export const useTagsEditing = defineStore("tags-editing", () => {
   };
 
   const color = computed(() => {
-    return favoriteId.value ? favorites.getById(favoriteId.value)?.color : null;
+    return favoriteId.value ? (favorites.getById(favoriteId.value)?.color ?? null) : null;
   });
 
   const addTag = (tag: string) => {
