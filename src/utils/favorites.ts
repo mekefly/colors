@@ -1,8 +1,8 @@
 /**
  * 颜色收藏管理工具
  *
- * 数据库由 databases.ts 统一初始化，本模块不负责初始化。
- * 使用前确保 databases.initAll() 已执行完成。
+ * 数据库由 databases.ts 统一初始化并注入到 useDatabaseStore。
+ * 本模块通过 useDatabaseStore().getDb() 读取数据库实例。
  *
  * 支持两种颜色类型：
  *   - HexColor：纯色，存储 hex 值
@@ -11,8 +11,8 @@
 
 import { defineStore } from "pinia";
 import { computed, ref, watch, nextTick } from "vue";
-import type { DatabaseApi } from "./database";
 import { createDatabase } from "./database";
+import { useDatabaseStore } from "./database-store";
 
 // ── 类型定义 ──
 
@@ -74,21 +74,18 @@ function isDuplicate(favorites: ColorFavorite[], color: HexColor | LinearGradien
   return favorites.some((f) => colorEquals(f.color, color));
 }
 
-// ── 数据库引用 ──
-// 由 databases.ts 在 initAll() 完成后通过 setDatabase() 注入
-let favoritesDb: DatabaseApi<{ data: ColorFavorite[] }> | null = null;
+// ── 数据库 ──
 
-/**
- * 注入已初始化的数据库实例
- * 由 databases.ts 在 initAll() 后调用
- */
-export function setDatabase(db: DatabaseApi<{ data: ColorFavorite[] }>): void {
-  favoritesDb = db;
+const DB_NAME = "color-favorites";
+
+/** 获取数据库实例（从 Pinia 注册中心读取） */
+function useFavoriteDB() {
+  return useDatabaseStore().getDB<{ data: ColorFavorite[] }>(DB_NAME);
 }
 
 export function createDB() {
   return createDatabase<{ data: ColorFavorite[] }>({
-    id: "color-favorites",
+    id: DB_NAME,
     initialData: { data: [] },
     version: 1,
   }).patch(1, ({ db }) => {
@@ -104,45 +101,32 @@ export function createDB() {
   });
 }
 
-/**
- * 获取数据库实例
- * 如果未初始化会抛出异常
- */
-function getDb(): DatabaseApi<{ data: ColorFavorite[] }> {
-  if (!favoritesDb) {
-    throw new Error("[favorites] 数据库未初始化，请确保在 databases.initAll() 之后使用");
-  }
-  return favoritesDb;
-}
-
-/**
- * 获取所有收藏的颜色
- */
-export function getFavorites(): DbDoc<{ data: ColorFavorite[] }> {
-  return getDb().getDoc();
-}
-
-/**
- * 保存收藏列表
- */
-async function saveFavorites(favoritesDoc: DbDoc<{ data: ColorFavorite[] }>): Promise<void> {
-  try {
-    const result = getDb().saveDoc(JSON.parse(JSON.stringify(favoritesDoc)));
-    if (result.ok) {
-      favoritesDoc._rev = result.rev;
-      console.log("已保存收藏", favoritesDoc);
-    } else if (result.error) {
-      console.error("保存收藏失败:", result.message);
-      throw new Error("保存收藏失败:" + result.message);
-    }
-  } catch (error) {
-    console.error("保存收藏失败:", error);
-    throw new Error("保存收藏失败:" + error);
-  }
-}
-
 export const useFavorites = defineStore("color-favorites", () => {
-  const doc = ref(getFavorites());
+  // ── 内部数据库操作 ──
+  const db = useFavoriteDB();
+
+  function loadDoc() {
+    return db.getDoc();
+  }
+
+  async function saveDoc(doc: any) {
+    try {
+      const result = db.saveDoc(JSON.parse(JSON.stringify(doc)));
+      if (result.ok) {
+        doc._rev = result.rev;
+        console.log("已保存收藏", doc);
+      } else if (result.error) {
+        console.error("保存收藏失败:", result.message);
+        throw new Error("保存收藏失败:" + result.message);
+      }
+    } catch (error) {
+      console.error("保存收藏失败:", error);
+      throw new Error("保存收藏失败:" + error);
+    }
+  }
+
+  // ── 状态 ──
+  const doc = ref(loadDoc());
   const value = computed({
     get: () => doc.value.data,
     set: (value) => {
@@ -159,7 +143,7 @@ export const useFavorites = defineStore("color-favorites", () => {
       if (isSaving) return;
       isSaving = true;
       try {
-        await saveFavorites(newValue);
+        await saveDoc(newValue);
       } finally {
         await nextTick();
         isSaving = false;

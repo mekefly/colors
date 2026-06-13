@@ -1,25 +1,21 @@
 <script setup lang="ts">
 /**
  * 数据库迁移页
- * 调用 initDatabases() 获取 pending 列表
+ * useDatabases() 获取 pending 列表
  * 用户确认 → migrate → build → goto ready
  * 失败 → 留在当前页，显示错误，可重试
  */
-import { onMounted, ref } from "vue";
-import { initDatabases } from "@/utils/databases";
-import type { DatabaseManager } from "@/utils/databases";
+import { ref } from "vue";
+import { useDatabaseManager } from "@/utils/databases";
 
 const emit = defineEmits<{
   goto: [phase: "ready"];
 }>();
 
-const manager = ref<DatabaseManager | null>(null);
+// setup 顶层调用 use 函数
+const manager = useDatabaseManager();
 const migrating = ref(false);
 const error = ref<string | null>(null);
-
-onMounted(() => {
-  manager.value = initDatabases();
-});
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -35,12 +31,11 @@ function statusLabel(status: string): string {
 }
 
 async function handleConfirm() {
-  if (!manager.value) return;
   migrating.value = true;
   error.value = null;
   try {
-    await manager.value.migrate();
-    manager.value.build();
+    await manager.migrate();
+    manager.buildAndRegister();
     emit("goto", "ready");
   } catch (e) {
     migrating.value = false;
@@ -51,7 +46,7 @@ async function handleConfirm() {
 
 <template>
   <div
-    class="fixed inset-0 z-50 p-5 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200"
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-5"
   >
     <div class="mb-6 text-5xl">🔄</div>
     <h1 class="mb-2 text-2xl font-bold text-slate-800">数据库需要更新</h1>
@@ -59,7 +54,7 @@ async function handleConfirm() {
 
     <div class="mb-8 w-full max-w-md space-y-3">
       <div
-        v-for="entry in manager?.pending"
+        v-for="entry in manager.pending"
         :key="entry.name"
         class="rounded-lg border px-4 py-3"
         :class="
