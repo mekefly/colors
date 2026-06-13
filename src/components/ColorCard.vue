@@ -3,7 +3,8 @@ import { colord } from "colord";
 import { computed } from "vue";
 import { useConfigStore } from "@/utils/config";
 import { useTagsEditing, type ColorFavorite } from "@/utils/favorites";
-import { copyColor2 } from "../utils/copy";
+import { colorToCSS, colorToDisplay } from "@/utils/favorites";
+import { copyColor, copyColor2, copyCSS } from "../utils/copy";
 import Tags from "./tags.vue";
 
 const editing = useTagsEditing();
@@ -22,15 +23,27 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const tags = computed(() => props.favorite.tags ?? []);
-const handleCopy = () => copyColor2(colord(props.favorite.color), config);
+const cssColor = computed(() => colorToCSS(props.favorite.color));
+const displayText = computed(() => colorToDisplay(props.favorite.color));
+
+// 纯色用 colord 格式化后复制，渐变直接复制 CSS 原文
+const handleCopy = () => {
+  if (props.favorite.color.type === "hex") {
+    copyColor2(colord(props.favorite.color.hex), config);
+  } else {
+    copyCSS(cssColor.value);
+  }
+};
 </script>
 
 <template>
-  <div class="group relative overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl">
+  <div
+    class="group relative overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl"
+  >
     <!-- 颜色块 -->
     <div
       class="relative aspect-square cursor-pointer p-2"
-      :style="{ backgroundColor: favorite.color }"
+      :style="{ background: cssColor }"
       @click="handleCopy"
       title="点击复制颜色值"
     >
@@ -61,11 +74,14 @@ const handleCopy = () => copyColor2(colord(props.favorite.color), config);
     <div
       class="absolute right-0 bottom-0 left-0 bg-white p-3"
       :style="{
-        background: 'linear-gradient(to bottom, transparent 0%, white 20%, white 100%)',
+        background:
+          'linear-gradient(to bottom, transparent 0%, white 20%, white 100%)',
       }"
     >
       <div class="mt-2 flex items-center justify-between">
-        <span class="font-mono text-sm font-medium text-gray-700">{{ favorite.color }}</span>
+        <span class="font-mono text-sm font-medium text-gray-700">{{
+          displayText
+        }}</span>
       </div>
     </div>
   </div>
