@@ -123,11 +123,11 @@ export type DatabaseMigrationInfo = {
 
 /** 数据库状态 */
 export type DatabaseMigrationStatus =
-  | { status: "ok" }                    // 版本一致，无需操作
-  | { status: "needs_migration" }        // 需要迁移
-  | { status: "interrupted" }            // 上次迁移被中断，需要先回滚
-  | { status: "corrupted" }             // 锁存在但备份丢失，数据可能损坏
-  | { status: "new" };                   // 全新数据库
+  | { status: "ok" } // 版本一致，无需操作
+  | { status: "needs_migration" } // 需要迁移
+  | { status: "interrupted" } // 上次迁移被中断，需要先回滚
+  | { status: "corrupted" } // 锁存在但备份丢失，数据可能损坏
+  | { status: "new" }; // 全新数据库
 
 // ============================================================================
 // 工具函数
@@ -163,8 +163,9 @@ function stripInternalFields<T extends Record<string, any>>(doc: T): DbDoc<T> {
 function createDefaultDocument<T extends Record<string, any>>(
   id: string,
   initialData: T,
+  version = 0,
 ): DbDoc<T> & { [FIELD_VERSION]: number } {
-  return { _id: id, [FIELD_VERSION]: 0, ...clone(initialData) };
+  return { _id: id, [FIELD_VERSION]: version, ...clone(initialData) };
 }
 
 /** 从 CouchDB 读取文档，不存在返回 null */
@@ -487,16 +488,10 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
     build() {
       const database = createDatabaseApi(dataId, options.initialData);
 
-      // 全新数据库：写入初始数据文档（含 __version: 0）
+      // 全新数据库：直接写入初始数据文档，版本为目标版本，无需迁移
       const existingDoc = loadDocument<T>(dataId);
       if (!existingDoc) {
-        saveDocument(createDefaultDocument(dataId, options.initialData));
-        // 新数据库版本为 0，如果 targetVersion > 0 需要迁移
-        if (targetVersion > 0) {
-          throw new Error(
-            `[database:${dataId}] 全新数据库需要迁移到 v${targetVersion}，请先调用 migrate()。`,
-          );
-        }
+        saveDocument(createDefaultDocument(dataId, options.initialData, targetVersion));
         return database;
       }
 
@@ -504,9 +499,7 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
       const status = this.checkStatus();
 
       if (status.status === "interrupted") {
-        throw new Error(
-          `[database:${dataId}] 上次迁移被中断，请先调用 migrate() 回滚后重试。`,
-        );
+        throw new Error(`[database:${dataId}] 上次迁移被中断，请先调用 migrate() 回滚后重试。`);
       }
 
       if (status.status === "corrupted") {
@@ -572,8 +565,9 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
      * 先检查状态，根据状态决定行为：
      *   - interrupted → 先回滚，再迁移
      *   - corrupted → 抛错，需要人工处理
+     *   - new → 创建初始文档
      *   - needs_migration → 直接迁移
-     *   - ok / new → 无操作
+     *   - ok → 无操作
      */
     async migrate() {
       const database = createDatabaseApi(dataId, options.initialData);
@@ -581,9 +575,17 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
 
       switch (status.status) {
         case "ok":
-        case "new":
           // 无需操作
           return;
+
+        case "new":
+          // 全新数据库：initialData 就是当前版本的数据结构，直接写入目标版本，无需迁移
+          saveDocument(createDefaultDocument(dataId, options.initialData, targetVersion));
+          return;
+
+        case "needs_migration":
+          // 直接迁移
+          break;
 
         case "corrupted":
           throw new Error(
@@ -595,16 +597,10 @@ export function createDatabase<T extends Record<string, any> = Record<string, an
           console.warn(`[database:${dataId}] 检测到上次迁移未完成，正在回滚...`);
           const rollbackSuccess = restoreFromBackup(dataId);
           if (!rollbackSuccess) {
-            throw new Error(
-              `[database:${dataId}] 回滚失败：备份不存在，数据可能已损坏。`,
-            );
+            throw new Error(`[database:${dataId}] 回滚失败：备份不存在，数据可能已损坏。`);
           }
           console.warn(`[database:${dataId}] 回滚完成，继续执行迁移...`);
           // 回滚后重新读取版本号
-          break;
-
-        case "needs_migration":
-          // 直接迁移
           break;
       }
 
