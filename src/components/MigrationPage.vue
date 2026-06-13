@@ -55,11 +55,14 @@ function handleImported() {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-auto bg-gradient-to-br from-slate-100 to-slate-200 p-5"
+    class="fixed inset-0 z-50 overflow-auto bg-gradient-to-br from-slate-100 to-slate-200 p-5"
   >
-    <div class="mb-6 text-5xl">🔄</div>
-    <h1 class="mb-2 text-2xl font-bold text-slate-800">数据库需要更新</h1>
-    <p class="mb-8 text-slate-500">检测到以下数据库需要处理，请确认后继续</p>
+    <div class="flex min-h-full flex-col items-center pt-16 pb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mb-6 h-16 w-16 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <h1 class="mb-2 text-2xl font-bold text-slate-800">数据库需要更新</h1>
+      <p class="mb-8 text-slate-500">检测到以下数据库需要处理，请确认后继续</p>
 
     <div class="mb-8 w-full max-w-md space-y-3">
       <div
@@ -114,6 +117,7 @@ function handleImported() {
         如果迁移失败，可以导出当前数据库备份，或将正常设备的备份导入此处。
       </p>
       <DatabaseIO :db-names="dbNames" @imported="handleImported" />
+    </div>
     </div>
   </div>
 </template>
