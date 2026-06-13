@@ -44,6 +44,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/gradient': RouteRecordInfo<
+      '/gradient',
+      '/gradient',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -66,6 +73,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/favorites.vue': {
       routes:
         | '/favorites'
+      views:
+        | never
+    }
+    'src/pages/gradient.vue': {
+      routes:
+        | '/gradient'
       views:
         | never
     }
