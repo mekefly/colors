@@ -92,7 +92,7 @@ export function createDB() {
   }).patch(1, ({ db }) => {
     // v0 → v1：将旧的hex裸字符串颜色迁移为结构化 HexColor 对象
     const doc = db.getDoc();
-    doc.data = doc.data.map((item) => {
+    doc.data = (doc.data ?? []).map((item: any) => {
       if (typeof item.color === "string") {
         return { ...item, color: { type: "hex", hex: item.color } as HexColor };
       }
