@@ -1,25 +1,46 @@
 /**
  * 数据库统一初始化
  *
- * useDatabases() 返回所有需要的数据和方法，无全局状态：
+ * useDatabaseManager() 返回所有需要的数据和方法，无全局状态：
  *
  *   // setup 顶层调用
- *   const dbs = useDatabases();
+ *   const dbs = useDatabaseManager();
  *
  *   onMounted(() => {
  *     if (dbs.needsAction) { ... }
  *     await dbs.migrate();
- *     dbs.build();
+ *     dbs.buildAndRegister();
  *   });
  *
  * 约定：use* 函数内部顶层调用 useXxx()，
  * 只能在 Vue setup 第一层调用。
- * build() 不调用 use*，只是闭包引用 store，无需 use 前缀。
+ * buildAndRegister() 不调用 use*，只是闭包引用 store，无需 use 前缀。
  */
 
 import { type DatabaseMigrationStatus, type DatabaseBuilder } from "./database";
 import { useDatabaseStore } from "./database-store";
-import { createDB } from "./favorites";
+import { DBBuilder as favoritesDBBuilder } from "./favorites";
+
+/**
+ * 获取数据库构建器列表
+ *
+ * @returns {DatabaseBuilderEntry<any>[]} 返回包含数据库名称和对应构建函数的对象数组
+ */
+function databaseBuilders(): DatabaseBuilderEntry<any>[] {
+  // ── 创建 builders ──
+  return [
+    favoritesDBBuilder,
+    // 在这里添加更多数据库...
+  ];
+}
+/**
+ * 获取所有数据库的名称列表
+ *
+ * @returns {string[]} 包含所有数据库名称的字符串数组
+ */
+export function databaseNames(): string[] {
+  return databaseBuilders().map((b) => b.name);
+}
 
 /** 单个数据库的运行时状态 */
 interface DatabaseEntry {
@@ -30,12 +51,12 @@ interface DatabaseEntry {
   targetVersion: number;
 }
 
-interface DatabaseBuilders<T extends Record<string, any> = Record<string, any>> {
+export interface DatabaseBuilderEntry<T extends Record<string, any> = Record<string, any>> {
   name: string;
   builder: () => DatabaseBuilder<T>;
 }
 
-/** useDatabases() 返回值 */
+/** useDatabaseManager() 返回值 */
 export interface DatabaseManager {
   /** 所有数据库条目 */
   entries: DatabaseEntry[];
@@ -47,6 +68,15 @@ export interface DatabaseManager {
   migrate(): Promise<void>;
   /** 构建所有数据库 API 并注入到 useDatabaseStore */
   buildAndRegister(): void;
+  /** 重新检测所有数据库状态（导入后调用） */
+  refresh(): void;
+}
+
+/** 从 entries 中筛选需要处理的数据库 */
+function buildPending(entries: DatabaseEntry[]): DatabaseEntry[] {
+  return entries.filter(
+    (e) => e.status.status === "needs_migration" || e.status.status === "interrupted",
+  );
 }
 
 /**
@@ -57,16 +87,7 @@ export function useDatabaseManager(): DatabaseManager {
   // ── 顶层调用 Pinia store ──
   const store = useDatabaseStore();
 
-  // ── 创建 builders ──
-  const databaseBuilders: DatabaseBuilders<any>[] = [
-    {
-      name: "color-favorites",
-      builder: createDB,
-    },
-    // 在这里添加更多数据库...
-  ];
-
-  let entries: DatabaseEntry[] = databaseBuilders.map((item) => {
+  const entries: DatabaseEntry[] = databaseBuilders().map((item) => {
     // ── 检查状态 + 获取版本号 ──
     let builder = item.builder();
     const info = builder.getVersionInfo();
@@ -79,15 +100,16 @@ export function useDatabaseManager(): DatabaseManager {
     };
   });
 
-  // ── 构造返回值 ──
-  const pending = entries.filter(
-    (e) => e.status.status === "needs_migration" || e.status.status === "interrupted",
-  );
+  let pending = buildPending(entries);
 
   return {
     entries,
-    needsAction: pending.length > 0,
-    pending,
+    get needsAction() {
+      return pending.length > 0;
+    },
+    get pending() {
+      return pending;
+    },
 
     async migrate() {
       for (const entry of entries) {
@@ -101,6 +123,17 @@ export function useDatabaseManager(): DatabaseManager {
         const db = entry.builder.build();
         store.setDB(entry.name, db);
       }
+    },
+
+    /** 重新检测所有数据库状态，更新 pending 列表 */
+    refresh() {
+      for (const entry of entries) {
+        const info = entry.builder.getVersionInfo();
+        entry.status = entry.builder.checkStatus();
+        entry.currentVersion = info.currentVersion;
+        entry.targetVersion = info.targetVersion;
+      }
+      pending = buildPending(entries);
     },
   };
 }

@@ -11,6 +11,7 @@
 
 import { defineStore } from "pinia";
 import { computed, ref, watch, nextTick } from "vue";
+import type { DatabaseBuilderEntry } from "./databases";
 import { createDatabase } from "./database";
 import { useDatabaseStore } from "./database-store";
 
@@ -76,7 +77,7 @@ function isDuplicate(favorites: ColorFavorite[], color: HexColor | LinearGradien
 
 // ── 数据库 ──
 
-const DB_NAME = "color-favorites";
+export const DB_NAME = "color-favorites";
 
 /** 获取数据库实例（从 Pinia 注册中心读取） */
 function useFavoriteDB() {
@@ -347,3 +348,7 @@ export const useTagsEditing = defineStore("tags-editing", () => {
     toggleTag,
   };
 });
+export const DBBuilder: DatabaseBuilderEntry<any> = {
+  name: DB_NAME,
+  builder: createDB,
+};

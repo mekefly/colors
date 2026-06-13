@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
-let route = useRoute();
-let currentPage = computed(() => {
+const route = useRoute();
+const currentPage = computed(() => {
   switch (route.path) {
     case "/":
       return "picker";
     case "/gradient":
       return "gradient";
+    case "/favorites":
+      return "favorites";
+    case "/about":
+      return "about";
     default:
-      return route.path.substring(1).replace("/", "-") as "picker" | "favorites" | "gradient";
+      return route.path.substring(1).replace("/", "-");
   }
 });
 </script>
@@ -18,7 +22,7 @@ let currentPage = computed(() => {
   <div class="mx-auto max-w-7xl px-6 py-4">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-800">颜色助手</h1>
-      <div class="flex space-x-2">
+      <div class="flex items-center space-x-2">
         <RouterLink to="/">
           <button
             :class="[
@@ -103,6 +107,33 @@ let currentPage = computed(() => {
               </svg>
               <span>收藏</span>
             </span>
+          </button>
+        </RouterLink>
+
+        <RouterLink to="/about">
+          <button
+            :class="[
+              'rounded-lg p-2 transition-all',
+              currentPage === 'about'
+                ? 'bg-blue-500 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-100',
+            ]"
+            title="关于"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </button>
         </RouterLink>
       </div>

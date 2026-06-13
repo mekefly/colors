@@ -27,15 +27,15 @@ zToolsApi.onPluginEnter((parm) => {
 </script>
 
 <template>
-  <LoadingPage v-if="phase === 'loading'" @goto="phase = $event" />
-  <MigrationPage v-else-if="phase === 'migration'" @goto="phase = $event" />
-  <Help v-else>
-    <Layerout>
+  <Help>
+    <ProvideMessage />
+    <LoadingPage v-if="phase === 'loading'" @goto="phase = $event" />
+    <MigrationPage v-else-if="phase === 'migration'" @goto="phase = $event" />
+    <Layerout v-else>
       <template #header>
         <NavBar />
       </template>
       <RouterView />
     </Layerout>
-    <ProvideMessage />
   </Help>
 </template>

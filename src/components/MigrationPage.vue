@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /**
  * 数据库迁移页
- * useDatabases() 获取 pending 列表
- * 用户确认 → migrate → build → goto ready
+ * useDatabaseManager() 获取 pending 列表
+ * 用户确认 → migrate → buildAndRegister → goto ready
  * 失败 → 留在当前页，显示错误，可重试
+ * 导入数据库后自动重新检测迁移状态
  */
 import { ref } from "vue";
-import { useDatabaseManager } from "@/utils/databases";
+import { useDatabaseManager, databaseNames } from "@/utils/databases";
+import DatabaseIO from "@/components/DatabaseIO.vue";
 
 const emit = defineEmits<{
   goto: [phase: "ready"];
@@ -16,6 +18,8 @@ const emit = defineEmits<{
 const manager = useDatabaseManager();
 const migrating = ref(false);
 const error = ref<string | null>(null);
+
+const dbNames = databaseNames();
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -42,11 +46,16 @@ async function handleConfirm() {
     error.value = e instanceof Error ? e.message : String(e);
   }
 }
+
+/** 导入后重新检测迁移状态 */
+function handleImported() {
+  manager.refresh();
+}
 </script>
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-5"
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-auto bg-gradient-to-br from-slate-100 to-slate-200 p-5"
   >
     <div class="mb-6 text-5xl">🔄</div>
     <h1 class="mb-2 text-2xl font-bold text-slate-800">数据库需要更新</h1>
@@ -77,14 +86,14 @@ async function handleConfirm() {
 
     <div
       v-if="error"
-      class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700"
+      class="mb-4 w-full max-w-md rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700"
     >
       处理失败: {{ error }}
     </div>
 
     <button
       :disabled="migrating || !!error"
-      class="rounded-lg bg-indigo-600 px-8 py-3 text-white shadow-md transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+      class="mb-8 rounded-lg bg-indigo-600 px-8 py-3 text-white shadow-md transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
       @click="handleConfirm"
     >
       <span v-if="migrating" class="flex items-center gap-2">
@@ -95,5 +104,16 @@ async function handleConfirm() {
       </span>
       <span v-else>确认处理</span>
     </button>
+
+    <!-- 数据库导入导出 -->
+    <div
+      class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-md"
+    >
+      <h3 class="mb-3 text-sm font-semibold text-gray-500">数据库备份与恢复</h3>
+      <p class="mb-4 text-xs text-gray-400">
+        如果迁移失败，可以导出当前数据库备份，或将正常设备的备份导入此处。
+      </p>
+      <DatabaseIO :db-names="dbNames" @imported="handleImported" />
+    </div>
   </div>
 </template>
