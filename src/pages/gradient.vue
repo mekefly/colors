@@ -40,8 +40,15 @@ const presets = [
 
 const angle = ref(90);
 
+const safeAngle = computed(() => {
+  if (typeof angle.value !== "number" || isNaN(angle.value)) {
+    return 90;
+  }
+  return angle.value;
+});
+
 /** 角度 → CSS 方向字符串 */
-const directionCSS = computed(() => `${angle.value}deg`);
+const directionCSS = computed(() => `${safeAngle.value}deg`);
 
 /** 点击预设：设置角度 */
 const setAngle = (a: number) => {
@@ -244,7 +251,20 @@ const reset = () => {
             />
             <div class="flex items-center gap-1">
               <input
-                v-model.number="angle"
+                :value.number="angle"
+                @input="
+                  {
+                    let newAngle = parseInt(($event.target as HTMLInputElement).value);
+                    if (!isNaN(newAngle)) {
+                      angle = newAngle;
+                    }
+                  }
+                "
+                @change="
+                  $event.target &&
+                  'value' in $event.target &&
+                  ($event.target.value = angle.toString())
+                "
                 type="number"
                 min="0"
                 max="360"
