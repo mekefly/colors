@@ -1,6 +1,17 @@
 # Changelog
 
 所有对本项目的重要变动都会记录在此文件中。
+## 1.4.2 - 2026-06-14 ([v1.4.1...v1.4.2](https://github.com/mekefly/colors/compare/v1.4.1...v1.4.2))
+
+
+### 🐛 Bug Fixes
+
+- 修复输入框可能因为NAN导致的异常问题
+- 修复数据库可能存在的保存漏洞
+
+### 🔧 Chores
+
+- 忽略掉lint未使用的变量规则
 ## 1.4.1 - 2026-06-14 ([v1.4.0...v1.4.1](https://github.com/mekefly/colors/compare/v1.4.0...v1.4.1))
 
 
