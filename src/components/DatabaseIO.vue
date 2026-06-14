@@ -125,9 +125,14 @@ async function doImport(text: string) {
     }
     // 读取当前文档的 _rev，覆盖导入数据中的旧 _rev，否则 CouchDB 返回 409 冲突
     const current = db.get(name);
-    const toPut = { ...doc, _rev: current?._rev };
+    const toPut = { ...doc };
+    if (current) {
+      toPut._rev = current._rev;
+    } else {
+      delete toPut._rev;
+    }
     const result = db.put(toPut);
-    if (result && typeof result === "object" && "ok" in result && !result.ok) {
+    if (!result || result.error || ("ok" in result && !result.ok)) {
       console.error(`导入 ${name} 失败:`, result);
       continue;
     }

@@ -182,7 +182,7 @@ function loadDocument<T extends Record<string, any>>(
 function saveDocument<T extends Record<string, any>>(doc: DbDoc<T>): DbReturn {
   const result = zToolsApi.db.put(clone(doc));
   // 校验写入结果，防止静默失败
-  if (result && typeof result === "object" && "ok" in result && !result.ok) {
+  if (!result || result.error || ("ok" in result && !result.ok)) {
     throw new Error(`数据库写入失败: ${JSON.stringify(result)}`);
   }
   return result;
