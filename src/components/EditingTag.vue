@@ -1,7 +1,13 @@
 <script lang="ts" setup>
 import { colord } from "colord";
 import { computed, ref, watch } from "vue";
-import { useTagsEditing, useAllTags, useFavorites, colorToCSS, colorToDisplay } from "../utils/favorites";
+import {
+  useTagsEditing,
+  useAllTags,
+  useFavorites,
+  colorToCSS,
+  colorToDisplay,
+} from "../utils/favorites";
 
 const editing = useTagsEditing();
 const allTag = useAllTags();

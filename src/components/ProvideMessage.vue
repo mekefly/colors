@@ -46,9 +46,7 @@ const getMessageConfig = (type: string) => {
         ]"
       >
         <!-- 图标 -->
-        <div
-          :class="['mr-3 flex-shrink-0', getMessageConfig(msg.type).iconClass]"
-        >
+        <div :class="['mr-3 flex-shrink-0', getMessageConfig(msg.type).iconClass]">
           <span v-html="getMessageConfig(msg.type).icon"></span>
         </div>
 

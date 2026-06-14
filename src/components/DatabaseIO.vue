@@ -12,8 +12,8 @@
  *   - imported: 导入完成后触发，父组件可据此检查迁移状态
  */
 import { ref } from "vue";
-import zToolsApi from "@/utils/ztoolsapi";
 import { useMessage } from "@/utils/message";
+import zToolsApi from "@/utils/ztoolsapi";
 
 const props = defineProps<{
   dbNames: string[];
@@ -118,9 +118,7 @@ async function doImport(text: string) {
     return;
   }
   let imported = 0;
-  for (const [name, doc] of Object.entries(
-    data.databases as Record<string, any>,
-  )) {
+  for (const [name, doc] of Object.entries(data.databases as Record<string, any>)) {
     if (!props.dbNames.includes(name)) {
       console.warn(`跳过未知数据库: ${name}`);
       continue;
@@ -188,7 +186,9 @@ async function handlePasteImport() {
       >
         <div class="flex items-center gap-2">
           <span class="font-medium text-gray-700">{{ name }}</span>
-          <span class="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-mono text-gray-500">v{{ getDbVersion(name) }}</span>
+          <span class="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-xs text-gray-500"
+            >v{{ getDbVersion(name) }}</span
+          >
         </div>
         <div class="flex gap-2">
           <button
@@ -241,20 +241,14 @@ async function handlePasteImport() {
       </button>
     </div>
 
-    <input
-      ref="fileInput"
-      type="file"
-      accept=".json"
-      class="hidden"
-      @change="handleFileChange"
-    />
+    <input ref="fileInput" type="file" accept=".json" class="hidden" @change="handleFileChange" />
 
     <!-- 粘贴导入区域 -->
     <div v-if="showPaste" class="space-y-3">
       <textarea
         v-model="pasteText"
         placeholder='粘贴 JSON 数据，格式：\n{ "version": 1, "databases": { "color-favorites": { ... } } }'
-        class="h-40 w-full resize-none rounded-lg border border-gray-200 p-3 font-mono text-xs text-gray-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+        class="h-40 w-full resize-none rounded-lg border border-gray-200 p-3 font-mono text-xs text-gray-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none"
         spellcheck="false"
       />
       <div class="flex gap-3">
@@ -266,7 +260,10 @@ async function handlePasteImport() {
           确认导入
         </button>
         <button
-          @click="showPaste = false; pasteText = ''"
+          @click="
+            showPaste = false;
+            pasteText = '';
+          "
           class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
         >
           取消
@@ -274,8 +271,6 @@ async function handlePasteImport() {
       </div>
     </div>
 
-    <p class="text-xs text-gray-400">
-      导出为 JSON，可用于备份或跨设备迁移。导入会覆盖当前数据。
-    </p>
+    <p class="text-xs text-gray-400">导出为 JSON，可用于备份或跨设备迁移。导入会覆盖当前数据。</p>
   </div>
 </template>

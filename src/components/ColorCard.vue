@@ -37,9 +37,7 @@ const handleCopy = () => {
 </script>
 
 <template>
-  <div
-    class="group relative overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl"
-  >
+  <div class="group relative overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl">
     <!-- 颜色块 -->
     <div
       class="relative aspect-square cursor-pointer p-2"
@@ -74,14 +72,11 @@ const handleCopy = () => {
     <div
       class="absolute right-0 bottom-0 left-0 bg-white p-3"
       :style="{
-        background:
-          'linear-gradient(to bottom, transparent 0%, white 20%, white 100%)',
+        background: 'linear-gradient(to bottom, transparent 0%, white 20%, white 100%)',
       }"
     >
       <div class="mt-2 flex items-center justify-between">
-        <span class="font-mono text-sm font-medium text-gray-700">{{
-          displayText
-        }}</span>
+        <span class="font-mono text-sm font-medium text-gray-700">{{ displayText }}</span>
       </div>
     </div>
   </div>

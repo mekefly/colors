@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "release": "node scripts/release.js",
     "build": "vite build",
     "check-all": "npm run fmt:check && npm run lint  && npm run type-check && npm run build",
     "dev": "vite dev",
@@ -14,6 +13,7 @@
     "lint:fix": "oxlint --fix",
     "preview": "vite preview",
     "publish": "npm run check-all && ztools publish",
+    "release": "node scripts/release.js",
     "type-check": "vue-tsc --build --noEmit"
   },
   "dependencies": {
