@@ -1,6 +1,13 @@
 # Changelog
 
 所有对本项目的重要变动都会记录在此文件中。
+## 1.4.1 - 2026-06-14 ([v1.4.0...v1.4.1](https://github.com/mekefly/colors/compare/v1.4.0...v1.4.1))
+
+
+### 🔧 Chores
+
+- fmt
+- 添加 git-cliff 配置、release 脚本和 CHANGELOG
 
 ## 1.4.0 - 2026-06-13  ([#13](https://github.com/mekefly/colors/pull/13))
 
