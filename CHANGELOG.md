@@ -1,6 +1,18 @@
 # Changelog
 
 所有对本项目的重要变动都会记录在此文件中。
+## 1.5.0 - 2026-06-15 ([v1.4.2...v1.5.0](https://github.com/mekefly/colors/compare/v1.4.2...v1.5.0))
+
+
+### ✨ Features
+
+- 增加颜色助手别名，减少因改名导致用户不习惯问题
+- AI智能配色 (https://github.com/mekefly/colors/pull/14)
+
+### 🔧 Chores
+
+- fmt
+- 插件更名为调色板
 ## 1.4.2 - 2026-06-14 ([v1.4.1...v1.4.2](https://github.com/mekefly/colors/compare/v1.4.1...v1.4.2))
 
 
