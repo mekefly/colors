@@ -291,9 +291,7 @@ const clearResult = () => {
           <h3 class="mb-3 text-sm font-semibold text-gray-500">AI 模型</h3>
 
           <!-- 加载中 -->
-          <div v-if="loadingModels" class="text-sm text-gray-400">
-            加载模型列表中...
-          </div>
+          <div v-if="loadingModels" class="text-sm text-gray-400">加载模型列表中...</div>
 
           <!-- 加载失败 -->
           <div v-else-if="loadFailed" class="space-y-2">
@@ -317,9 +315,7 @@ const clearResult = () => {
           <!-- 无可用模型 -->
           <div v-else-if="noModels()" class="space-y-2">
             <p class="text-sm text-amber-600">未检测到可用的 AI 模型</p>
-            <p class="text-xs text-gray-400">
-              请先在 ZTools 设置中配置至少一个 AI 模型
-            </p>
+            <p class="text-xs text-gray-400">请先在 ZTools 设置中配置至少一个 AI 模型</p>
             <button
               @click="zToolsApi.redirectAiModelsSetting()"
               class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs text-blue-600 transition-colors hover:bg-blue-100"
@@ -342,7 +338,7 @@ const clearResult = () => {
               </select>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                class="pointer-events-none absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 text-gray-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
