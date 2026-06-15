@@ -19,6 +19,12 @@
       "cmds": ["选择颜色"]
     },
     {
+      "code": "AI配色",
+      "explain": "AI智能生成配色方案",
+      "icon": "logo.png",
+      "cmds": ["AI配色", "配色生成", "智能配色"]
+    },
+    {
       "code": "预览颜色",
       "explain": "查看颜色",
       "icon": "logo.png",

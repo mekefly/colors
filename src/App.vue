@@ -22,6 +22,9 @@ zToolsApi.onPluginEnter((parm) => {
       router.push({ path: "/" });
       currentColorStore.setCurrentColor(parm.payload);
       break;
+    case "AI配色":
+      router.push({ path: "/ai-colors" });
+      break;
   }
 });
 </script>
