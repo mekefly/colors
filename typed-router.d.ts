@@ -44,6 +44,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/ai-colors': RouteRecordInfo<
+      '/ai-colors',
+      '/ai-colors',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/favorites': RouteRecordInfo<
       '/favorites',
       '/favorites',
@@ -80,6 +87,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/about.vue': {
       routes:
         | '/about'
+      views:
+        | never
+    }
+    'src/pages/ai-colors.vue': {
+      routes:
+        | '/ai-colors'
       views:
         | never
     }
