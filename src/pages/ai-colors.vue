@@ -20,18 +20,23 @@ interface AiModel {
 const models = ref<AiModel[]>([]);
 const selectedModelId = ref("");
 const loadingModels = ref(true);
+const loadFailed = ref(false);
 const currentModelLabel = ref("");
+
+const noModels = () => !loadingModels.value && models.value.length === 0;
 
 const loadModels = async () => {
   try {
     const list = await zToolsApi.allAiModels();
     models.value = list;
+    loadFailed.value = false;
     if (list.length > 0) {
       const first = list[0]!;
       selectedModelId.value = first.id;
       currentModelLabel.value = first.label;
     }
   } catch {
+    loadFailed.value = true;
     message.warning("获取模型列表失败");
   } finally {
     loadingModels.value = false;
@@ -91,6 +96,16 @@ const systemPrompt = `你是一个专业的配色设计师。用户会告诉你�
 {"colors":[{"hex":"#RRGGBB","name":"颜色名称"}]}`;
 
 const generateColors = async () => {
+  if (noModels()) {
+    message.warning("未检测到可用模型，请先在 ZTools 设置中配置 AI 模型");
+    return;
+  }
+
+  if (!selectedModelId.value) {
+    message.warning("请选择一个 AI 模型");
+    return;
+  }
+
   if (!prompt.value.trim()) {
     message.warning("请输入配色主题");
     return;
@@ -274,32 +289,72 @@ const clearResult = () => {
         <!-- 模型选择 -->
         <div class="rounded-xl bg-white p-5 shadow-md">
           <h3 class="mb-3 text-sm font-semibold text-gray-500">AI 模型</h3>
-          <div class="relative">
-            <select
-              v-model="selectedModelId"
-              @change="onModelChange"
-              :disabled="loadingModels"
-              class="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 transition-colors hover:bg-gray-100 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option v-if="loadingModels" value="">加载中...</option>
-              <option v-for="m in models" :key="m.id" :value="m.id">
-                {{ m.label }}（积分 {{ m.cost }}）
-              </option>
-            </select>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+
+          <!-- 加载中 -->
+          <div v-if="loadingModels" class="text-sm text-gray-400">
+            加载模型列表中...
           </div>
-          <p v-if="currentModelLabel" class="mt-2 text-xs text-gray-400">
-            当前使用：{{ currentModelLabel }}
-          </p>
+
+          <!-- 加载失败 -->
+          <div v-else-if="loadFailed" class="space-y-2">
+            <p class="text-sm text-red-500">模型列表加载失败</p>
+            <div class="flex gap-2">
+              <button
+                @click="loadModels"
+                class="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:bg-gray-200"
+              >
+                重试
+              </button>
+              <button
+                @click="zToolsApi.redirectAiModelsSetting()"
+                class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs text-blue-600 transition-colors hover:bg-blue-100"
+              >
+                前往设置
+              </button>
+            </div>
+          </div>
+
+          <!-- 无可用模型 -->
+          <div v-else-if="noModels()" class="space-y-2">
+            <p class="text-sm text-amber-600">未检测到可用的 AI 模型</p>
+            <p class="text-xs text-gray-400">
+              请先在 ZTools 设置中配置至少一个 AI 模型
+            </p>
+            <button
+              @click="zToolsApi.redirectAiModelsSetting()"
+              class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs text-blue-600 transition-colors hover:bg-blue-100"
+            >
+              前往设置 AI 模型
+            </button>
+          </div>
+
+          <!-- 模型列表 -->
+          <template v-else>
+            <div class="relative">
+              <select
+                v-model="selectedModelId"
+                @change="onModelChange"
+                class="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 transition-colors hover:bg-gray-100 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none"
+              >
+                <option v-for="m in models" :key="m.id" :value="m.id">
+                  {{ m.label }}
+                </option>
+              </select>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <p v-if="currentModelLabel" class="mt-2 text-xs text-gray-400">
+              当前使用：{{ currentModelLabel }}
+            </p>
+          </template>
         </div>
 
         <!-- 颜色数量滑动条 -->
