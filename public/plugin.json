@@ -13,6 +13,12 @@
   },
   "features": [
     {
+      "code": "颜色助手",
+      "explain": "使用调色版快速生成你需要的颜色。",
+      "icon": "logo.png",
+      "cmds": ["颜色助手", "colors"]
+    },
+    {
       "code": "选择颜色",
       "explain": "打开插件选择一个颜色",
       "icon": "logo.png",
