@@ -32,10 +32,9 @@ export { Database } from "./tag/db";
 export { DatabaseLive } from "./live/db";
 
 export * as FavoritesService from "./server/favorites";
-export type { GradientStop, HexColor, LinearGradient } from "./server/favorites";
+export type { GradientStop, HexColor, LinearGradient } from "./tag";
 
-// ── 迁移 API ──
-export * as MigrationApi from "./api/migration";
+export * from "./api";
 export type {
   MigrationSummary,
   MigrateAllResult,

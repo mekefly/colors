@@ -3,26 +3,26 @@ import { Effect } from "effect";
 /**
  * 数据库迁移页
  * MigrationApi.checkAll() 获取迁移列表
- * 用户确认 → MigrationApi.migrateAll() → buildAndRegister → goto ready
+ * 用户确认 → MigrationApi.migrateAll() → goto ready
  * 失败 → 留在当前页，显示错误，可重试
  * 导入数据库后自动重新检测迁移状态
  */
 import { ref, onMounted } from "vue";
-import type { DocMigrationInfo } from "@/effect";
+import type { DocMigrationInfoWithError } from "../effect/server";
 import DatabaseIO from "@/components/DatabaseIO.vue";
 import { MigrationApi } from "@/effect";
-import { databaseNames, useDatabaseManager } from "@/utils/databases";
-import type { DocMigrationInfoWithError } from "../effect/server";
+import { DocServiceBuilderDeclarative } from "@/effect/live/docs";
 
 const emit = defineEmits<{
   goto: [phase: "ready"];
 }>();
 
-const manager = useDatabaseManager();
 const infos = ref<DocMigrationInfoWithError[]>([]);
 const migrating = ref(false);
 const error = ref<string | null>(null);
-const dbNames = databaseNames();
+
+// 从声明式构建器获取数据库名称列表
+const dbNames = Object.values(DocServiceBuilderDeclarative).map((b) => b.id);
 
 async function refreshStatus() {
   try {
@@ -51,7 +51,6 @@ async function handleConfirm() {
   error.value = null;
   try {
     await Effect.runPromise(MigrationApi.migrateAll());
-    manager.buildAndRegister();
     emit("goto", "ready");
   } catch (e) {
     migrating.value = false;

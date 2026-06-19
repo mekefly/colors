@@ -4,7 +4,7 @@
  * yield* FavoritesDoc 拿到 DocService<FavoritesDoc>，类型自动精确。
  */
 
-import { Effect } from "effect";
+import { Effect, pipe, DateTime, Random } from "effect";
 import { FavoritesDoc, type HexColor, type LinearGradient } from "../tag";
 
 // ── 颜色辅助函数 ──
@@ -27,29 +27,37 @@ export function colorEquals(a: HexColor | LinearGradient, b: HexColor | LinearGr
 
 // ── 业务操作 ──
 
-export function getAll() {
-  return Effect.gen(function* () {
-    const db = yield* FavoritesDoc;
-    const doc = yield* db.getDoc();
-    return doc.data ?? [];
-  });
-}
+export const getAll = () =>
+  pipe(
+    FavoritesDoc,
+    Effect.andThen((db) => db.getDoc()),
+    Effect.map((doc) => doc.data ?? []),
+  );
 
 export function addFavorite(color: HexColor | LinearGradient, tags: string[] = []) {
-  return Effect.gen(function* () {
-    const db = yield* FavoritesDoc;
-    const doc = yield* db.getDoc();
-    if (doc.data.some((f) => colorEquals(f.color, color))) {
-      return yield* Effect.fail(new Error("该颜色已在收藏中"));
-    }
-    doc.data.unshift({
-      id: Date.now().toString(36) + Math.random().toString(36).substring(2),
-      color,
-      tags,
-      createdAt: Date.now(),
-    });
-    yield* db.saveDoc(doc);
-  });
+  return pipe(
+    FavoritesDoc,
+    Effect.flatMap((db) =>
+      db.updateDoc((doc) =>
+        Effect.gen(function* () {
+          if (doc.data.some((f) => colorEquals(f.color, color))) {
+            yield* Effect.fail(new Error("该颜色已在收藏中"));
+          }
+
+          let randomNumber = yield* Random.next;
+          let date = yield* DateTime.now;
+          doc.data.unshift({
+            id: date.epochMillis.toString(36) + randomNumber.toString(36).substring(2),
+            color,
+            tags,
+            createdAt: Date.now(),
+          });
+
+          return doc;
+        }),
+      ),
+    ),
+  );
 }
 
 export function removeFavorite(id: string) {

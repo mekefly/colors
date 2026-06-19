@@ -1,3 +1,4 @@
+import type { Tag } from "effect/Context";
 import { Context } from "effect";
 import type { DocService } from "..";
 
@@ -7,10 +8,11 @@ import type { DocService } from "..";
  *   const db = yield* FavoritesDoc   // DocService<FavoritesDocData>
  *   const doc = yield* db.getDoc()   // EffectDbDoc<FavoritesDocData>
  */
-export class FavoritesDoc extends Context.Tag("FavoritesDoc")<
+export const FavoritesDoc: FavoritesDoc = Context.GenericTag<
   FavoritesDoc,
   DocService<FavoritesDocData>
->() {}
+>("FavoritesDoc");
+export type FavoritesDoc = Tag<FavoritesDoc, DocService<FavoritesDocData>>;
 
 //当前版本的数据库类型
 export interface ColorFavorite extends ColorFavorite1 {}

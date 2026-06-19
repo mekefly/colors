@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { useFavorites, type HexColor } from "@/utils/favorites";
+import { useFavoritesApi, type HexColor } from "@/use/use-favorites-api";
 import { useMessage } from "@/utils/message";
 import zToolsApi from "@/utils/ztoolsapi";
 
 const message = useMessage();
-const favorites = useFavorites();
+const { addFavorite } = useFavoritesApi();
 
 // ── 模型 ──
 
@@ -230,7 +230,7 @@ const copyAsArray = async () => {
 const favoriteColor = (hex: string, name: string) => {
   try {
     const color: HexColor = { type: "hex", hex };
-    favorites.addFavorite(color, [resultPrompt.value, name]);
+    addFavorite(color, [resultPrompt.value, name]);
     message.success(`已收藏 ${hex}`);
   } catch (err: any) {
     message.warning(err?.message ?? "收藏失败");
@@ -243,7 +243,7 @@ const favoriteAll = () => {
   for (const c of resultColors.value) {
     try {
       const color: HexColor = { type: "hex", hex: c.hex };
-      favorites.addFavorite(color, [resultPrompt.value, c.name]);
+      addFavorite(color, [resultPrompt.value, c.name]);
       added++;
     } catch {
       // 跳过重复项

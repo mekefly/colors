@@ -1,9 +1,9 @@
 export * as FavoritesDocDetail from "./favorite-doc";
 export {
   FavoritesDoc,
-  ColorFavorite,
-  FavoritesDocData,
-  GradientStop,
-  HexColor,
-  LinearGradient,
+  type ColorFavorite,
+  type FavoritesDocData,
+  type GradientStop,
+  type HexColor,
+  type LinearGradient,
 } from "./favorite-doc";

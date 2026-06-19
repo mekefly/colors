@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useFavorites, type ColorFavorite } from "@/utils/favorites";
+import type { ColorFavorite } from "@/use/use-favorites-api";
 
 interface Props {
   allTags: string[];

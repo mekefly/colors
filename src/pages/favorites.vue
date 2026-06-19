@@ -2,28 +2,34 @@
 import ColorCard from "@/components/ColorCard.vue";
 import EditingTag from "@/components/EditingTag.vue";
 import TagFilterPanel from "@/components/TagFilterPanel.vue";
-import { useAllTags, useFavorites, useTagFilter, useTagsEditing } from "@/utils/favorites";
+import { useFavoritesApi } from "@/use/use-favorites-api";
 import { useMessage } from "@/utils/message";
 
-const favorites = useFavorites();
-const tagFilter = useTagFilter();
-const allTags = useAllTags();
-const editing = useTagsEditing();
+const {
+  value: favorites,
+  removeFavorite,
+  allTags,
+  selectedTags,
+  filteredFavorites,
+  isEditing,
+  clearSelectedTags,
+} = useFavoritesApi();
+
 const message = useMessage();
 
 // 从收藏中移除
 const removeFromFavorites = (id: string) => {
-  favorites.removeFavorite(id);
+  removeFavorite(id);
   message.success("已取消收藏");
 };
 
 // 切换标签选择（筛选）
 const toggleTag = (tag: string) => {
-  const index = tagFilter.selectedTags.indexOf(tag);
+  const index = selectedTags.indexOf(tag);
   if (index > -1) {
-    tagFilter.selectedTags.splice(index, 1);
+    selectedTags.splice(index, 1);
   } else {
-    tagFilter.selectedTags.push(tag);
+    selectedTags.push(tag);
   }
 };
 </script>
@@ -33,14 +39,14 @@ const toggleTag = (tag: string) => {
     <div class="flex gap-6">
       <!-- 左侧 -->
       <div class="w-64 shrink-0">
-        <EditingTag v-if="editing.isEditing"></EditingTag>
+        <EditingTag v-if="isEditing"></EditingTag>
         <TagFilterPanel
           v-else
-          :all-tags="allTags.value"
-          :selected-tags="tagFilter.selectedTags"
-          :favorites="favorites.value"
+          :all-tags="allTags"
+          :selected-tags="selectedTags"
+          :favorites="favorites"
           @toggle-tag="toggleTag"
-          @clear-tags="tagFilter.clear"
+          @clear-tags="clearSelectedTags"
         />
       </div>
 
@@ -50,14 +56,14 @@ const toggleTag = (tag: string) => {
         <div class="flex items-center justify-between">
           <h2 class="text-2xl font-bold text-gray-800">我的收藏</h2>
           <span class="text-sm text-gray-500"
-            >{{ tagFilter.filteredFavorites.length }} / {{ favorites.value.length }} 个颜色</span
+            >{{ filteredFavorites.length }} / {{ favorites.length }} 个颜色</span
           >
         </div>
 
         <!-- 收藏列表 -->
-        <div v-if="tagFilter.filteredFavorites.length > 0" class="grid grid-cols-3 gap-4">
+        <div v-if="filteredFavorites.length > 0" class="grid grid-cols-3 gap-4">
           <ColorCard
-            v-for="favorite in tagFilter.filteredFavorites"
+            v-for="favorite in filteredFavorites"
             :key="favorite.id"
             :favorite="favorite"
             @remove="removeFromFavorites"
@@ -83,11 +89,11 @@ const toggleTag = (tag: string) => {
             </svg>
           </div>
           <p class="text-lg text-gray-500">
-            {{ tagFilter.selectedTags.length > 0 ? "没有符合筛选条件的颜色" : "暂无收藏的颜色" }}
+            {{ selectedTags.length > 0 ? "没有符合筛选条件的颜色" : "暂无收藏的颜色" }}
           </p>
           <p class="mt-2 text-sm text-gray-400">
             {{
-              tagFilter.selectedTags.length > 0
+              selectedTags.length > 0
                 ? "尝试清除筛选条件或添加更多颜色"
                 : "在颜色选择器中点击收藏按钮添加"
             }}

@@ -36,7 +36,7 @@ function createDocLive(): {
   [K in keyof typeof DocServiceBuilderDeclarative]: ReturnType<
     typeof createDocService
   > extends Effect.Effect<any, infer E, infer R>
-    ? Layer.Layer<(typeof DocServiceBuilderDeclarative)[K]["tag"], E, R>
+    ? Layer.Layer<(typeof DocServiceBuilderDeclarative)[K]["tag"], E, never>
     : never;
 } {
   return Object.fromEntries(

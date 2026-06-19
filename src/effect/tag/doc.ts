@@ -8,7 +8,6 @@
  *   Test = FavoritesDocTest
  */
 import { Context, Effect } from "effect";
-import type { DatabaseMigrationStatus } from "../../utils/database";
 import {
   DatabaseError,
   DocumentNotFound,
@@ -28,11 +27,11 @@ export interface DocService<T extends {} = Record<string, any>> {
   saveDoc: (
     doc: EffectDbDoc<T>,
   ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError>;
-  updateDoc: (
+  updateDoc: <E>(
     handler: (
       doc: EffectDbDoc<T>,
-    ) => Effect.Effect<EffectDbDoc<T>, DatabaseError | WriteConflict | WriteError>,
-  ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError>;
+    ) => Effect.Effect<EffectDbDoc<T>, DatabaseError | WriteConflict | WriteError | E>,
+  ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError | E>;
 }
 
 // ── 迁移补丁 ──

@@ -3,18 +3,15 @@
  * 加载页
  * MigrationApi.checkAll() 检查状态：
  *   - 有迁移 → goto migration
- *   - 无迁移 → buildAndRegister + goto ready
+ *   - 无迁移 → goto ready
  */
 import { onMounted } from "vue";
 import { Effect } from "effect";
 import { MigrationApi } from "@/effect";
-import { useDatabaseManager } from "@/utils/databases";
 
 const emit = defineEmits<{
   goto: [phase: "migration" | "ready"];
 }>();
-
-const manager = useDatabaseManager();
 
 onMounted(async () => {
   try {
@@ -22,7 +19,6 @@ onMounted(async () => {
     if (summary.hasPending) {
       emit("goto", "migration");
     } else {
-      manager.buildAndRegister();
       emit("goto", "ready");
     }
   } catch (error) {

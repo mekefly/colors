@@ -7,7 +7,6 @@
 
 import { Effect, Layer } from "effect";
 import { fresh, service } from "effect/Layer";
-import type { DatabaseMigrationStatus } from "../../utils/database";
 import type { DocService } from "../tag/doc";
 import type { DocServiceBuilderDeclarative } from "./docs";
 import { VersionMismatch, WriteConflict, type DatabaseError } from "../errors";
