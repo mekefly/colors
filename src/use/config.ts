@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ColorFormat } from "./color";
+import type { ColorFormat } from "../utils/color";
 
 export const useConfigStore = defineStore("config", {
   state: () => {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { useFavoritesApi, type HexColor } from "@/use/use-favorites-api";
-import { useMessage } from "@/utils/message";
+import { useFavoritesStore, type HexColor } from "@/use/use-favorites-store";
 import zToolsApi from "@/utils/ztoolsapi";
+import { useMessage } from "../use";
 
 const message = useMessage();
-const { addFavorite } = useFavoritesApi();
+const { addFavorite } = useFavoritesStore();
 
 // ── 模型 ──
 
@@ -123,7 +123,7 @@ const generateColors = async () => {
   resultPrompt.value = prompt.value.trim();
 
   try {
-    const result = await zToolsApi.ai({
+    const _abortController = zToolsApi.ai({
       model: selectedModelId.value || undefined,
       messages: [
         { role: "system", content: systemPrompt },
@@ -133,6 +133,8 @@ const generateColors = async () => {
         },
       ],
     });
+    abortController.value = _abortController;
+    const result = await _abortController;
 
     // 解析 AI 返回的 JSON
     const content = result.content ?? "";

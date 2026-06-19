@@ -1,48 +1,42 @@
 <script lang="ts" setup>
 import { colord } from "colord";
 import { computed, ref } from "vue";
-import {
-  useFavoritesApi,
-  colorToCSS,
-  colorToDisplay,
-} from "../use/use-favorites-api";
+import { useAllTagsStore } from "@/use/use-all-tags-store";
+import { colorToCSS, colorToDisplay } from "@/use/use-favorites-api";
+import { useTagsEditingStore } from "@/use/use-tags-editing-store";
 
-const {
-  editingTags,
-  allTags,
-  editingColor,
-  editingToggleTag,
-  editingAddTag,
-  back,
-} = useFavoritesApi();
+const editing = useTagsEditingStore();
+const allTag = useAllTagsStore();
 
 const newTag = ref("");
 const isAddEditing = ref(false);
 const addTag = () => {
-  editingAddTag(newTag.value);
+  editing.addTag(newTag.value);
   isAddEditing.value = false;
   newTag.value = "";
 };
 
 // 纯色判断明暗，渐变色默认当暗色处理
 const isLight = computed(() => {
-  if (editingColor.value?.type === "hex") {
-    return colord(editingColor.value.hex).isLight();
+  if (editing.editingColor?.type === "hex") {
+    return colord(editing.editingColor.hex).isLight();
   }
   return false;
 });
-const cssColor = computed(() => (editingColor.value ? colorToCSS(editingColor.value) : ""));
-const displayText = computed(() => (editingColor.value ? colorToDisplay(editingColor.value) : ""));
+const cssColor = computed(() => (editing.editingColor ? colorToCSS(editing.editingColor) : ""));
+const displayText = computed(() =>
+  editing.editingColor ? colorToDisplay(editing.editingColor) : "",
+);
 </script>
 
 <template>
   <div
-    v-if="editingTags && editingColor"
+    v-if="editing.editingTags && editing.editingColor"
     class="sticky top-6 rounded-xl border border-gray-100 bg-white p-6 shadow-lg"
   >
     <!-- Header Section -->
     <div
-      @click="back()"
+      @click="editing.back()"
       :style="{ background: cssColor }"
       class="mb-6 flex items-center justify-between rounded-lg px-4 py-3"
     >
@@ -74,14 +68,14 @@ const displayText = computed(() => (editingColor.value ? colorToDisplay(editingC
     </div>
 
     <!-- Tags List -->
-    <div v-if="allTags.length > 0" class="mb-6 space-y-3">
+    <div v-if="allTag.value.length > 0" class="mb-6 space-y-3">
       <button
-        v-for="tag in allTags"
+        v-for="tag in allTag.value"
         :key="tag"
-        @click="editingToggleTag(tag)"
+        @click="editing.toggleTag(tag)"
         :class="[
           'flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm transition-all duration-200',
-          editingTags.includes(tag)
+          editing.editingTags.includes(tag)
             ? 'scale-[1.02] transform bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
             : 'text-gray-700 outline-1 outline-gray-200 hover:bg-gray-50 hover:shadow-sm',
         ]"
@@ -89,7 +83,7 @@ const displayText = computed(() => (editingColor.value ? colorToDisplay(editingC
         <span class="font-medium">{{ tag }}</span>
 
         <svg
-          v-if="editingTags.includes(tag)"
+          v-if="editing.editingTags.includes(tag)"
           xmlns="http://www.w3.org/2000/svg"
           class="h-5 w-5 text-white"
           fill="none"
@@ -180,7 +174,7 @@ const displayText = computed(() => (editingColor.value ? colorToDisplay(editingC
         <div class="flex justify-around">
           <button
             @click="addTag"
-            class="tshrink growion-colors rounded-lg bg-green-500 px-4 py-2 text-white shadow-sm duration-200 hover:bg-green-600"
+            class="shrink rounded-lg bg-green-500 px-4 py-2 text-white shadow-sm transition-colors duration-200 hover:bg-green-600"
             :disabled="!newTag.trim()"
             :class="{ 'cursor-not-allowed opacity-50': !newTag.trim() }"
           >

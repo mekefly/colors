@@ -42,9 +42,11 @@ export function colordToString(color: Colord, options?: ColorToStringOptions): s
       return `lab(${lab.l.toFixed(0)} ${lab.a.toFixed(0)} ${lab.b.toFixed(0)})`;
     case "lch":
       const lch = color.toLch();
-      return `lch(${lch.l.toFixed(0)} ${lch.c.toFixed(0)} ${lch.h.toFixed(0)})`;
+      return `lch(${lch.l.toFixed(0)} ${lch.c.toFixed(0)} ${(lch.h ?? 0).toFixed(0)})`;
     case "xyz":
       const xyz = color.toXyz();
       return `xyz(${xyz.x.toFixed(2)} ${xyz.y.toFixed(2)} ${xyz.z.toFixed(2)})`;
+    default:
+      return color.toHex();
   }
 }

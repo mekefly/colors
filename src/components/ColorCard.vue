@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { colord } from "colord";
 import { computed } from "vue";
-import { useConfigStore } from "@/utils/config";
-import { useFavoritesApi, type ColorFavorite } from "@/use/use-favorites-api";
+import { useTagsEditingStore, type ColorFavorite } from "@/use/use-favorites-api";
 import { colorToCSS, colorToDisplay } from "@/use/use-favorites-api";
-import { copyColor2, copyCSS } from "../utils/copy";
+import { useConfigStore } from "../use/config.js";
+import { useCopy } from "../use/copy.js";
 import Tags from "./tags.vue";
 
-const { startEditing } = useFavoritesApi();
+const { startEditing } = useTagsEditingStore();
 const config = useConfigStore();
+const { copyColor2, copyCSS } = useCopy();
 
 interface Props {
   favorite: ColorFavorite;

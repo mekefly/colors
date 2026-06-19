@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Colord } from "colord";
-import { useMessage } from "@/utils/message";
 import type { HexColor } from "../effect/index.js";
-import { useFavoritesApi } from "../use/use-favorites-api.js";
+import { useMessage } from "../use/message.js";
+import { useFavoritesStore } from "../use/use-favorites-api.js";
 import ColorFormat from "./ColorFormat.vue";
 
 const message = useMessage();
-const { addFavorite } = useFavoritesApi();
+const { addFavorite } = useFavoritesStore();
 let color = defineModel<Colord>({ required: true });
 
 const formats = ["hex", "rgb", "hsv/hsb", "hsl", "hwb", "cmyk", "lab", "lch", "xyz"] as const;

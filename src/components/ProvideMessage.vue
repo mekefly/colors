@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useMessage } from "../utils/message";
+import { useMessage } from "../use";
 
 const messageStore = useMessage();
 

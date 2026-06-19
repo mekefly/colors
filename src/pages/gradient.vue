@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { useFavoritesApi, type GradientStop, type LinearGradient } from "@/use/use-favorites-api";
-import { colorToCSS } from "@/use/use-favorites-api";
-import { useMessage } from "@/utils/message";
+import { colorToCSS, useFavoritesStore, type LinearGradient } from "@/use/use-favorites-store";
+import type { GradientStop } from "../effect";
+import { useMessage } from "../use";
 
-const { addFavorite } = useFavoritesApi();
+const { addFavorite } = useFavoritesStore();
 const message = useMessage();
 
 // ── 预览容器尺寸（用于精确计算圆点位置） ──

@@ -50,7 +50,7 @@ export function addFavorite(color: HexColor | LinearGradient, tags: string[] = [
             id: date.epochMillis.toString(36) + randomNumber.toString(36).substring(2),
             color,
             tags,
-            createdAt: Date.now(),
+            createdAt: date.epochMillis,
           });
 
           return doc;

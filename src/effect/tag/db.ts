@@ -21,7 +21,7 @@ export class Database extends Context.Tag("Database")<
     /**
      * 批量操作文档(新增、修改、删除)
      */
-    bulkDocs(docs: DbDoc[]): Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError>[];
+    bulkDocs(docs: DbDoc[]): Effect.Effect<DbReturn[], DatabaseError | WriteConflict | WriteError>;
     /**
      * 获取所有文档 可根据文档id前缀查找
      */

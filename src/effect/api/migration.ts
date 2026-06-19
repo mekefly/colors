@@ -36,11 +36,8 @@ export function migrateAll(): Effect.Effect<MigrateAllResult, never> {
 /** 迁移单个数据库（用户点击单个迁移按钮时调用） */
 export function runMigration(
   builder: (typeof DocServiceBuilderDeclarative)[keyof typeof DocServiceBuilderDeclarative],
-): Effect.Effect<void, any> {
-  return migrateDoc(
-    builder.id,
-    builder.targetVersion,
-    builder.initialData,
-    builder.patches,
-  ).pipe(Effect.provide(Deps));
+) {
+  return migrateDoc(builder.id, builder.targetVersion, builder.initialData, builder.patches).pipe(
+    Effect.provide(Deps),
+  );
 }

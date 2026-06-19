@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCurrentColor } from "@/utils/current-color";
+import { useCurrentColor } from "../use";
 
 defineProps<{ title?: string }>();
 const currentColorStore = useCurrentColor();

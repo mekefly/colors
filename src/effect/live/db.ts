@@ -49,7 +49,8 @@ function dbReturnToEffect(
   return Effect.fail(
     new WriteError({
       docId,
-      message: result?.name ? result?.name + ":" : "" + (result?.message ?? JSON.stringify(result)),
+      message:
+        (result?.name ? result?.name + ":" : "") + (result?.message ?? JSON.stringify(result)),
       cause: result,
     }),
   );
@@ -89,7 +90,7 @@ const databaseService = Database.of({
   },
 
   bulkDocs: (docs: DbDoc[]) =>
-    docs.map((doc) => writeOp(doc._id, () => zToolsApi.db.put(clone(doc)))),
+    Effect.all(docs.map((doc) => writeOp(doc._id, () => zToolsApi.db.put(clone(doc))))),
 
   allDocs: <T extends {} = Record<string, any>>(key?: string) =>
     Effect.try({ try: () => zToolsApi.db.allDocs<T>(key) ?? [], catch: toDatabaseError }),

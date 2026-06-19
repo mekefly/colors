@@ -7,10 +7,9 @@ import lchPlugin from "colord/plugins/lch";
 import xyzPlugin from "colord/plugins/xyz";
 extend([hwbPlugin, cmykPlugin, labPlugin, lchPlugin, xyzPlugin]);
 import { computed, ref, watch } from "vue";
-import { colordToHsvString } from "@/utils/color";
-import { useConfigStore } from "@/utils/config";
-import { copyColor2 } from "@/utils/copy";
+import { useConfigStore, useCopy } from "@/use";
 
+const { copyColor2 } = useCopy();
 interface Props {
   flag: "hsl" | "hsv/hsb" | "hex" | "rgb" | "hwb" | "cmyk" | "lab" | "lch" | "xyz";
 }

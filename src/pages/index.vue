@@ -12,8 +12,7 @@ import RGBSliders from "@/components/RGBSliders.vue";
 import SaturationSlider from "@/components/SaturationSlider.vue";
 import Space from "@/components/Space.vue";
 import ValueSlider from "@/components/ValueSlider.vue";
-import { useConfigStore } from "@/utils/config";
-import { useCurrentColor } from "@/utils/current-color";
+import { useCurrentColor } from "../use";
 
 const currentColorStore = useCurrentColor();
 const currentColor = computed({

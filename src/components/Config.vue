@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { useConfigStore } from "@/utils/config";
-import { useCurrentColor } from "@/utils/current-color";
+import { useConfigStore } from "../use/config.js";
+import { useCurrentColor } from "../use/current-color.js";
 import ColorFormatSelect from "./ColorFormatSelect.vue";
 import SettingItem from "./SettingItem.vue";
 import ToggleButton from "./ToggleButton.vue";

@@ -53,11 +53,11 @@ export interface MigrationContext<T extends Record<string, any>> {
   toVersion: number;
 }
 
-export type MigrationFunction<T extends Record<string, any>, F extends Record<string, any> = T> =
+export type MigrationFunction<T extends Record<string, any>> =
   //纯函数迁移
   (
     ctx: MigrationContext<any>,
-  ) => Effect.Effect<T, WriteConflict | DatabaseError | DowngradeRejected | DatabaseError>;
+  ) => Effect.Effect<T, WriteConflict | DatabaseError | DowngradeRejected>;
 
 /**
  * 文档服务构建器声明

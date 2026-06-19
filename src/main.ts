@@ -3,7 +3,7 @@ import { createApp } from "vue";
 import "./input.css";
 import App from "./App.vue";
 import { router } from "./router";
-import { useMessage } from "./utils/message";
+import { useMessage } from "./use";
 
 const pinia = createPinia();
 const app = createApp(App);

@@ -6,7 +6,7 @@
  */
 
 import { Effect, Layer } from "effect";
-import { fresh, service } from "effect/Layer";
+
 import type { DocService } from "../tag/doc";
 import type { DocServiceBuilderDeclarative } from "./docs";
 import { VersionMismatch, WriteConflict, type DatabaseError } from "../errors";
@@ -59,7 +59,7 @@ export function createDocService<T extends Record<string, any>>({
       .get(id)
       .pipe(Effect.catchTag("DocumentNotFound", () => Effect.succeed(null)));
 
-    if (!existing) {
+    if (existing) {
       const currentVersion = (existing as any)[FIELD_VERSION] ?? 0;
       if (currentVersion !== targetVersion) {
         return yield* Effect.fail(

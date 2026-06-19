@@ -22,8 +22,7 @@ import {
   PatchMissing,
   WriteConflict,
   WriteError,
-  type DatabaseCorrupted,
-  type MigrationInterrupted,
+
 } from "../errors";
 import { Database } from "../tag/db";
 
