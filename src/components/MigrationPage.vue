@@ -1,34 +1,46 @@
 <script setup lang="ts">
+import { Effect } from "effect";
 /**
  * 数据库迁移页
- * useDatabaseManager() 获取 pending 列表
- * 用户确认 → migrate → buildAndRegister → goto ready
+ * MigrationApi.checkAll() 获取迁移列表
+ * 用户确认 → MigrationApi.migrateAll() → buildAndRegister → goto ready
  * 失败 → 留在当前页，显示错误，可重试
  * 导入数据库后自动重新检测迁移状态
  */
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import type { DocMigrationInfo } from "@/effect";
 import DatabaseIO from "@/components/DatabaseIO.vue";
-import { useDatabaseManager, databaseNames } from "@/utils/databases";
+import { MigrationApi } from "@/effect";
+import { databaseNames, useDatabaseManager } from "@/utils/databases";
+import type { DocMigrationInfoWithError } from "../effect/server";
 
 const emit = defineEmits<{
   goto: [phase: "ready"];
 }>();
 
-// setup 顶层调用 use 函数
 const manager = useDatabaseManager();
+const infos = ref<DocMigrationInfoWithError[]>([]);
 const migrating = ref(false);
 const error = ref<string | null>(null);
-
 const dbNames = databaseNames();
+
+async function refreshStatus() {
+  try {
+    const summary = await Effect.runPromise(MigrationApi.checkAll());
+    infos.value = summary.infos;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+onMounted(refreshStatus);
 
 function statusLabel(status: string): string {
   switch (status) {
-    case "interrupted":
-      return "上次迁移中断，需要回滚";
     case "needs_migration":
       return "需要迁移";
-    case "corrupted":
-      return "数据损坏，需要手动处理";
+    case "error":
+      return "DOC错误";
     default:
       return "";
   }
@@ -38,7 +50,7 @@ async function handleConfirm() {
   migrating.value = true;
   error.value = null;
   try {
-    await manager.migrate();
+    await Effect.runPromise(MigrationApi.migrateAll());
     manager.buildAndRegister();
     emit("goto", "ready");
   } catch (e) {
@@ -49,7 +61,7 @@ async function handleConfirm() {
 
 /** 导入后重新检测迁移状态 */
 function handleImported() {
-  manager.refresh();
+  refreshStatus();
 }
 </script>
 
@@ -75,23 +87,18 @@ function handleImported() {
 
       <div class="mb-8 w-full max-w-md space-y-3">
         <div
-          v-for="entry in manager.pending"
-          :key="entry.name"
-          class="rounded-lg border px-4 py-3"
-          :class="
-            entry.status.status === 'corrupted'
-              ? 'border-red-200 bg-red-50'
-              : 'border-amber-200 bg-amber-50'
-          "
+          v-for="info in infos"
+          :key="info.docId"
+          class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
         >
           <div class="flex items-center justify-between">
-            <span class="font-medium text-slate-700">{{ entry.name }}</span>
+            <span class="font-medium text-slate-700">{{ info.docId }}</span>
             <span class="text-sm text-slate-500">
-              v{{ entry.currentVersion }} → v{{ entry.targetVersion }}
+              v{{ info.currentVersion }} → v{{ info.targetVersion }}
             </span>
           </div>
           <div class="text-sm text-slate-500">
-            {{ statusLabel(entry.status.status) }}
+            {{ statusLabel(info.status.type) }}
           </div>
         </div>
       </div>
@@ -121,7 +128,7 @@ function handleImported() {
       <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-md">
         <h3 class="mb-3 text-sm font-semibold text-gray-500">数据库备份与恢复</h3>
         <p class="mb-4 text-xs text-gray-400">
-          如果迁移失败，可以导出当前数据库备份，或将正常设备的备份导入此处。
+          如果迁移失败，可以导出当前数据库备份，或将正常设备的备份导入此处，或者备份使用此数据库开启一个讨论。
         </p>
         <DatabaseIO :db-names="dbNames" @imported="handleImported" />
       </div>

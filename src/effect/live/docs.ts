@@ -1,15 +1,51 @@
-import type { T } from "vue-router/dist/index-D_VEAp3P.js";
-import { Effect, Layer, pipe, type Context } from "effect";
-import type { DatabasePatch } from "../../utils/database";
-import type {
-  DatabaseCorrupted,
-  DatabaseError,
-  DowngradeRejected,
-  MigrationInterrupted,
-  WriteConflict,
-} from "../errors";
-import { FavoritesDoc, type ColorFavorite, type ColorFavorite1, type DocService } from "../tag";
+import { Effect, Layer, Context } from "effect";
+import type { DatabaseError, DowngradeRejected, WriteConflict } from "../errors";
+import type { ColorFavorite1, FavoritesDocData0, FavoritesDocData } from "../tag/docs/favorite-doc";
+import { FavoritesDoc } from "../tag";
 import { createDocService, createDocServiceLive } from "./Doc";
+
+/**
+ * Doc 服务构建器实例（声明式定义文档服务的 ID、初始数据、目标版本和迁移补丁）
+ *
+ * 目前仅用于 FavoritesDoc，后续可扩展为其他文档服务。
+ * 迁移补丁为纯函数，接受当前文档数据和版本信息，返回新的文档数据或抛出错误。
+ */
+export const DocServiceBuilderDeclarative = createDocServiceBuilderDeclarative({
+  favorites: {
+    id: "color-favorites",
+    initialData: { data: [] } as FavoritesDocData,
+    targetVersion: 1,
+    tag: FavoritesDoc,
+    patches: {
+      [1]: (ctx: MigrationContext<FavoritesDocData0>) => {
+        return Effect.succeed({
+          data: ctx.doc.data.map(
+            (item) => ({ ...item, color: { type: "hex", hex: item.color } }) as ColorFavorite1,
+          ),
+        });
+      },
+    },
+  },
+});
+
+/**
+ * 默认运行时的Doc层
+ */
+export const DocLive = createDocLive();
+function createDocLive(): {
+  [K in keyof typeof DocServiceBuilderDeclarative]: ReturnType<
+    typeof createDocService
+  > extends Effect.Effect<any, infer E, infer R>
+    ? Layer.Layer<(typeof DocServiceBuilderDeclarative)[K]["tag"], E, R>
+    : never;
+} {
+  return Object.fromEntries(
+    Object.entries(DocServiceBuilderDeclarative).map(([key, value]) => [
+      key,
+      createDocServiceLive(value),
+    ]),
+  ) as any;
+}
 
 export interface MigrationContext<T extends Record<string, any>> {
   doc: T;
@@ -21,15 +57,7 @@ export type MigrationFunction<T extends Record<string, any>, F extends Record<st
   //纯函数迁移
   (
     ctx: MigrationContext<any>,
-  ) => Effect.Effect<
-    T,
-    | WriteConflict
-    | DatabaseError
-    | MigrationInterrupted
-    | DatabaseCorrupted
-    | DowngradeRejected
-    | DatabaseError
-  >;
+  ) => Effect.Effect<T, WriteConflict | DatabaseError | DowngradeRejected | DatabaseError>;
 
 /**
  * 文档服务构建器声明
@@ -58,35 +86,3 @@ function createDocServiceBuilderDeclarative<
 } {
   return o as any;
 }
-
-/** 收藏文档数据结构 */
-export interface FavoritesDocData1 {
-  data: ColorFavorite1[];
-}
-export interface FavoritesDocData {
-  data: ColorFavorite[];
-}
-
-/**
- * Doc 服务构建器实例（声明式定义文档服务的 ID、初始数据、目标版本和迁移补丁）
- *
- * 目前仅用于 FavoritesDoc，后续可扩展为其他文档服务。
- * 迁移补丁为纯函数，接受当前文档数据和版本信息，返回新的文档数据或抛出错误。
- */
-export const DocServiceBuilderDeclarative = createDocServiceBuilderDeclarative({
-  favorites: {
-    id: "color-favorites",
-    initialData: { data: [] } as FavoritesDocData1,
-    targetVersion: 1,
-    tag: FavoritesDoc,
-    patches: {
-      [1]: (ctx: MigrationContext<FavoritesDocData>) => {
-        return Effect.succeed({
-          data: ctx.doc.data.map((item) => ({ ...item, color: { type: "hex", hex: item.color } })),
-        });
-      },
-    },
-  },
-});
-
-export const FavoritesDocLive = createDocServiceLive(DocServiceBuilderDeclarative.favorites);

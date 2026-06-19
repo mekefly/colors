@@ -9,7 +9,13 @@
  */
 import { Context, Effect } from "effect";
 import type { DatabaseMigrationStatus } from "../../utils/database";
-import { DatabaseError, DocumentNotFound, PatchMissing, WriteConflict } from "../errors";
+import {
+  DatabaseError,
+  DocumentNotFound,
+  PatchMissing,
+  WriteConflict,
+  type WriteError,
+} from "../errors";
 
 // ── 全局类型 ──
 export type EffectDbDoc<T extends {} = Record<string, any>> = DbDoc<T>;
@@ -19,15 +25,14 @@ export interface DocService<T extends {} = Record<string, any>> {
   readonly docId: string;
   getVersion: () => Effect.Effect<number, DatabaseError>;
   getDoc: () => Effect.Effect<EffectDbDoc<T>, DatabaseError | DocumentNotFound>;
-  saveDoc: (doc: EffectDbDoc<T>) => Effect.Effect<DbReturn, DatabaseError | WriteConflict>;
+  saveDoc: (
+    doc: EffectDbDoc<T>,
+  ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError>;
   updateDoc: (
-    handler: (doc: EffectDbDoc<T>) => Effect.Effect<EffectDbDoc<T>, DatabaseError>,
-  ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict>;
-  checkStatus: () => Effect.Effect<DatabaseMigrationStatus, DatabaseError>;
-  getVersionInfo: () => Effect.Effect<
-    { currentVersion: number; targetVersion: number },
-    DatabaseError
-  >;
+    handler: (
+      doc: EffectDbDoc<T>,
+    ) => Effect.Effect<EffectDbDoc<T>, DatabaseError | WriteConflict | WriteError>,
+  ) => Effect.Effect<DbReturn, DatabaseError | WriteConflict | WriteError>;
 }
 
 // ── 迁移补丁 ──

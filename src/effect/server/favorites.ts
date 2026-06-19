@@ -5,31 +5,9 @@
  */
 
 import { Effect } from "effect";
-import type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../tag/database";
-import { FavoritesDoc } from "../tag/database";
-
-// ── 类型重新导出 ──
-
-export type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../tag/database";
-
-export interface GradientStop {
-  color: string;
-  position?: number;
-}
-
-export interface HexColor {
-  type: "hex";
-  hex: string;
-}
-
-export interface LinearGradient {
-  type: "linear-gradient";
-  direction: string;
-  stops: GradientStop[];
-}
+import { FavoritesDoc, type HexColor, type LinearGradient } from "../tag";
 
 // ── 颜色辅助函数 ──
-
 export function colorToCSS(color: HexColor | LinearGradient): string {
   if (color.type === "hex") return color.hex;
   const stopsStr = color.stops

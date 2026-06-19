@@ -1,23 +1,25 @@
 <script setup lang="ts">
 /**
  * 加载页
- * useDatabases() 检查状态：
- *   - 需要处理 → goto migration
- *   - 不需要 → build + goto ready
+ * MigrationApi.checkAll() 检查状态：
+ *   - 有迁移 → goto migration
+ *   - 无迁移 → buildAndRegister + goto ready
  */
 import { onMounted } from "vue";
+import { Effect } from "effect";
+import { MigrationApi } from "@/effect";
 import { useDatabaseManager } from "@/utils/databases";
 
 const emit = defineEmits<{
   goto: [phase: "migration" | "ready"];
 }>();
 
-// setup 顶层调用 use 函数
 const manager = useDatabaseManager();
 
-onMounted(() => {
+onMounted(async () => {
   try {
-    if (manager.needsAction) {
+    const summary = await Effect.runPromise(MigrationApi.checkAll());
+    if (summary.hasPending) {
       emit("goto", "migration");
     } else {
       manager.buildAndRegister();

@@ -16,11 +16,10 @@ export {
 export {
   FavoritesDoc,
   type DocService,
-  type FavoritesDoc as FavoritesDocType,
   type ColorFavorite,
   type EffectDbDoc,
   type MigrationPatch,
-} from "./tag/doc";
+} from "./tag";
 
 export {
   MigrationService,
@@ -31,7 +30,15 @@ export {
 export { Database } from "./tag/db";
 
 export { DatabaseLive } from "./live/db";
-export { MigrationServiceLive } from "./live/migration-live";
 
 export * as FavoritesService from "./server/favorites";
 export type { GradientStop, HexColor, LinearGradient } from "./server/favorites";
+
+// ── 迁移 API ──
+export * as MigrationApi from "./api/migration";
+export type {
+  MigrationSummary,
+  MigrateAllResult,
+  DocMigrationInfo,
+  DocMigrationStatus,
+} from "./server/migration";
