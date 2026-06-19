@@ -5,8 +5,8 @@
  * 不对外暴露任何依赖关系（Avoiding Requirement Leakage）。
  */
 import { Effect, Layer, pipe } from "effect";
-import type { DocService } from "../layer";
-import { MigrationService } from "../layer/migration";
+import type { DocService } from "../tag";
+import { MigrationService } from "../tag/migration";
 import { createDocService } from "./Doc";
 import { DocServiceBuilderDeclarative, type FavoritesDocData1 } from "./docs";
 

@@ -4,7 +4,12 @@
 
 import { Effect, Layer } from "effect";
 import type { DatabaseMigrationStatus } from "../../utils/database";
-import { FavoritesDoc, type DocService, type EffectDbDoc, type FavoritesDocData } from "../layer/database";
+import {
+  FavoritesDoc,
+  type DocService,
+  type EffectDbDoc,
+  type FavoritesDocData,
+} from "../tag/database";
 
 const FIELD_VERSION = "__version";
 
@@ -27,8 +32,7 @@ function createService(): DocService<FavoritesDocData> {
   return {
     docId,
 
-    getVersion: () =>
-      Effect.sync(() => (store.get(docId)?.[FIELD_VERSION] as number) ?? 0),
+    getVersion: () => Effect.sync(() => (store.get(docId)?.[FIELD_VERSION] as number) ?? 0),
 
     getDoc: () =>
       Effect.sync(() => {
@@ -79,8 +83,7 @@ function createService(): DocService<FavoritesDocData> {
         return { status: "ok" } as DatabaseMigrationStatus;
       }),
 
-    getVersionInfo: () =>
-      Effect.sync(() => ({ currentVersion: 0, targetVersion: 1 })),
+    getVersionInfo: () => Effect.sync(() => ({ currentVersion: 0, targetVersion: 1 })),
   };
 }
 

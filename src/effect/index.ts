@@ -20,20 +20,18 @@ export {
   type ColorFavorite,
   type EffectDbDoc,
   type MigrationPatch,
-} from "./layer/doc";
+} from "./tag/doc";
 
 export {
   MigrationService,
   type MigrationInfo,
   type MigrationResult,
   type ValidationResult,
-} from "./layer/migration";
+} from "./tag/migration";
+export { Database } from "./tag/db";
 
-export { MigrationServiceLive } from "./impl/migration-live";
+export { DatabaseLive } from "./live/db";
+export { MigrationServiceLive } from "./live/migration-live";
 
-export * as FavoritesService from "./services/favorites";
-export type {
-  GradientStop,
-  HexColor,
-  LinearGradient,
-} from "./services/favorites";
+export * as FavoritesService from "./server/favorites";
+export type { GradientStop, HexColor, LinearGradient } from "./server/favorites";

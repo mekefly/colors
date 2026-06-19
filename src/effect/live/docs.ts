@@ -8,7 +8,7 @@ import type {
   MigrationInterrupted,
   WriteConflict,
 } from "../errors";
-import { FavoritesDoc, type ColorFavorite, type ColorFavorite1, type DocService } from "../layer";
+import { FavoritesDoc, type ColorFavorite, type ColorFavorite1, type DocService } from "../tag";
 import { createDocService, createDocServiceLive } from "./Doc";
 
 export interface MigrationContext<T extends Record<string, any>> {

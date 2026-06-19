@@ -8,7 +8,7 @@
 import type { Tag } from "effect/Context";
 import { Effect, Layer, type Context } from "effect";
 import type { DatabaseMigrationStatus } from "../../utils/database";
-import type { DocService } from "../layer/doc";
+import type { DocService } from "../tag/doc";
 import type { DocServiceBuilderDeclarative } from "./docs";
 import { FavoritesDoc } from "..";
 import zToolsApi from "../../utils/ztoolsapi";

@@ -23,6 +23,12 @@ export class WriteConflict extends Data.TaggedError("WriteConflict")<{
   readonly docId: string;
   readonly message: string;
 }> {}
+/** 写入错误 未知错误 */
+export class WriteError extends Data.TaggedError("WriteError")<{
+  readonly docId: string;
+  readonly message: string;
+  readonly cause?: unknown;
+}> {}
 
 /** 版本不匹配，需要迁移 */
 export class VersionMismatch extends Data.TaggedError("VersionMismatch")<{

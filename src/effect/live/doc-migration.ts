@@ -5,6 +5,8 @@
  */
 
 import { Effect, Layer, pipe, type Context } from "effect";
+import type { DocService } from "../tag/doc";
+import type { DocServiceBuilderDeclarative } from "./docs";
 import {
   DatabaseCorrupted,
   DatabaseError,
@@ -12,8 +14,6 @@ import {
   PatchMissing,
   VersionMismatch,
 } from "../errors";
-import type { DocService } from "../layer/doc";
-import type { DocServiceBuilderDeclarative } from "./docs";
 
 type MigrationError =
   | DatabaseError
@@ -55,9 +55,7 @@ export function createMigrationLive<
         (v) => {
           const patch = patches[v];
           if (!patch) {
-            return Effect.fail(
-              new PatchMissing({ docId: id, versions: [v] }),
-            );
+            return Effect.fail(new PatchMissing({ docId: id, versions: [v] }));
           }
           return pipe(
             service.getDoc(),

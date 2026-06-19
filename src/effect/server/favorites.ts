@@ -5,12 +5,12 @@
  */
 
 import { Effect } from "effect";
-import { FavoritesDoc } from "../layer/database";
-import type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../layer/database";
+import type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../tag/database";
+import { FavoritesDoc } from "../tag/database";
 
 // ── 类型重新导出 ──
 
-export type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../layer/database";
+export type { ColorFavorite, FavoritesDoc as FavoritesDocType } from "../tag/database";
 
 export interface GradientStop {
   color: string;
@@ -66,7 +66,9 @@ export function addFavorite(color: HexColor | LinearGradient, tags: string[] = [
     }
     doc.data.unshift({
       id: Date.now().toString(36) + Math.random().toString(36).substring(2),
-      color, tags, createdAt: Date.now(),
+      color,
+      tags,
+      createdAt: Date.now(),
     });
     yield* db.saveDoc(doc);
   });
