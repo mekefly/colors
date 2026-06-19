@@ -15,40 +15,31 @@
  * 约定：use* 函数内部顶层调用 useXxx()，
  * 只能在 Vue setup 第一层调用。
  * buildAndRegister() 不调用 use*，只是闭包引用 store，无需 use 前缀。
- *
- * 迁移使用 effect 层的 migrate 流水线。
  */
 
-import { Effect } from "effect";
 import { type DatabaseMigrationStatus, type DatabaseBuilder } from "./database";
 import { useDatabaseStore } from "./database-store";
 import { DBBuilder as favoritesDBBuilder } from "./favorites";
-import { createDatabaseService, migrate as effectMigrate } from "../effect";
-import type { MigrationPatch } from "../effect";
-
-// ── 数据库注册表 ──
-
-interface DatabaseRegistry {
-  name: string;
-  builder: () => DatabaseBuilder<any>;
-  initialData: Record<string, any>;
-}
-
-/** 所有数据库的注册信息 */
-const databaseRegistry: DatabaseRegistry[] = [
-  {
-    name: "color-favorites",
-    builder: favoritesDBBuilder.builder,
-    initialData: { data: [] },
-  },
-  // 在这里添加更多数据库...
-];
 
 /**
+ * 获取数据库构建器列表
+ *
+ * @returns {DatabaseBuilderEntry<any>[]} 返回包含数据库名称和对应构建函数的对象数组
+ */
+function databaseBuilders(): DatabaseBuilderEntry<any>[] {
+  // ── 创建 builders ──
+  return [
+    favoritesDBBuilder,
+    // 在这里添加更多数据库...
+  ];
+}
+/**
  * 获取所有数据库的名称列表
+ *
+ * @returns {string[]} 包含所有数据库名称的字符串数组
  */
 export function databaseNames(): string[] {
-  return databaseRegistry.map((r) => r.name);
+  return databaseBuilders().map((b) => b.name);
 }
 
 /** 单个数据库的运行时状态 */
@@ -73,7 +64,7 @@ export interface DatabaseManager {
   needsAction: boolean;
   /** 需要处理的数据库列表 */
   pending: DatabaseEntry[];
-  /** 执行所有迁移（使用 effect 迁移流水线） */
+  /** 执行所有迁移 */
   migrate(): Promise<void>;
   /** 构建所有数据库 API 并注入到 useDatabaseStore */
   buildAndRegister(): void;
@@ -89,42 +80,6 @@ function buildPending(entries: DatabaseEntry[]): DatabaseEntry[] {
 }
 
 /**
- * 将原 builder 的迁移逻辑桥接为 effect MigrationPatch
- *
- * 由于 builder 内部的 patches Map 不暴露，
- * 我们直接用 builder.migrate() 作为 effect 操作的 fallback。
- * 对于需要 effect 测试的场景，可以直接构造 effect MigrationPatch。
- */
-function createMigrationEffect(
-  entry: DatabaseEntry,
-): Effect.Effect<void, any> {
-  const builder = entry.builder;
-  const status = builder.checkStatus();
-
-  // 新数据库或已迁移完成：无需操作
-  if (status.status === "ok" || status.status === "new") {
-    return Effect.void;
-  }
-
-  // 损坏：报错
-  if (status.status === "corrupted") {
-    return Effect.fail(
-      new Error(`[database:${entry.name}] 数据库状态损坏：迁移锁存在但备份丢失`),
-    );
-  }
-
-  // interrupted 或 needs_migration：委托给原 builder.migrate()
-  // 保留原逻辑的全部行为（锁 + 备份 + 错误处理）
-  return Effect.try({
-    try: () => builder.migrate(),
-    catch: (error) =>
-      new Error(
-        `[database:${entry.name}] 迁移失败: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-  });
-}
-
-/**
  * 初始化所有数据库（use 函数）
  * 内部顶层调用 useDatabaseStore()，因此必须在 Vue setup 顶层调用
  */
@@ -132,8 +87,9 @@ export function useDatabaseManager(): DatabaseManager {
   // ── 顶层调用 Pinia store ──
   const store = useDatabaseStore();
 
-  const entries: DatabaseEntry[] = databaseRegistry.map((item) => {
-    const builder = item.builder();
+  const entries: DatabaseEntry[] = databaseBuilders().map((item) => {
+    // ── 检查状态 + 获取版本号 ──
+    let builder = item.builder();
     const info = builder.getVersionInfo();
     return {
       name: item.name,
@@ -154,10 +110,10 @@ export function useDatabaseManager(): DatabaseManager {
     get pending() {
       return pending;
     },
+
     async migrate() {
       for (const entry of entries) {
-        const migrateEffect = createMigrationEffect(entry);
-        await Effect.runPromise(migrateEffect);
+        await entry.builder.migrate();
       }
     },
 

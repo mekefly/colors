@@ -1,9 +1,5 @@
 /**
- * Effect 数据库层 — 统一导出
- *
- * 按需导入：
- *   import { DatabaseTag, makeDatabaseLayer } from "./effect";
- *   import { createTestDatabaseLayer } from "./effect/test/database";
+ * Effect Doc 层 — 统一导出
  */
 
 export {
@@ -17,20 +13,23 @@ export {
   DowngradeRejected,
 } from "./errors";
 
-export { DatabaseTag } from "./layer/database";
-export type { DatabaseService, MigrationPatch, EffectDbDoc } from "./layer/database";
+export {
+  FavoritesDoc,
+  type DocService,
+  type FavoritesDoc as FavoritesDocType,
+  type ColorFavorite,
+  type EffectDbDoc,
+  type MigrationPatch,
+} from "./layer/database";
 
-export { createDatabaseService, makeDatabaseLayer } from "./impl/database";
+export { FavoritesDocLive, createFavoritesDocService } from "./impl/FavoritesDocLive";
+export { FavoritesDocTest } from "./test/FavoritesDocTest";
 export { migrate } from "./impl/database-migration";
 export type { MigrationContext } from "./impl/database-migration";
-
-// ── 业务服务 ──
 
 export * as FavoritesService from "./services/favorites";
 export type {
   GradientStop,
   HexColor,
   LinearGradient,
-  ColorFavorite,
-  FavoritesDoc,
 } from "./services/favorites";

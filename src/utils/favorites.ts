@@ -7,9 +7,6 @@
  * 支持两种颜色类型：
  *   - HexColor：纯色，存储 hex 值
  *   - LinearGradient：线性渐变，存储方向 + 色标
- *
- * 业务逻辑委托给 effect/services/favorites.ts，
- * 本文件只负责 Pinia 响应式状态和 Vue 集成。
  */
 
 import { defineStore } from "pinia";
@@ -18,17 +15,65 @@ import type { DatabaseBuilderEntry } from "./databases";
 import { createDatabase } from "./database";
 import { useDatabaseStore } from "./database-store";
 
-// ── 类型定义（重新导出 effect 层类型） ──
+// ── 类型定义 ──
 
-export type { GradientStop, HexColor, LinearGradient, ColorFavorite } from "../effect/services/favorites";
-import type { HexColor, LinearGradient, ColorFavorite } from "../effect/services/favorites";
-import {
-  colorToCSS,
-  colorToDisplay,
-  colorEquals,
-} from "../effect/services/favorites";
+/** 渐变色标 */
+export interface GradientStop {
+  /** hex 颜色值，如 "#FF0000" */
+  color: string;
+  /** 位置百分比 0-100，可选（不填则自动均匀分布） */
+  position?: number;
+}
 
-export { colorToCSS, colorToDisplay, colorEquals };
+/** 纯色 */
+export interface HexColor {
+  type: "hex";
+  hex: string;
+}
+
+/** 线性渐变 */
+export interface LinearGradient {
+  type: "linear-gradient";
+  /** CSS 方向，如 "to right"、"135deg" */
+  direction: string;
+  /** 色标列表，至少 2 个 */
+  stops: GradientStop[];
+}
+
+/** 收藏条目 */
+export interface ColorFavorite {
+  id: string;
+  color: HexColor | LinearGradient;
+  tags: string[];
+  createdAt: number;
+}
+
+// ── 颜色辅助函数 ──
+
+/** 将 HexColor | LinearGradient 转为 CSS 字符串（可用于 style 绑定） */
+export function colorToCSS(color: HexColor | LinearGradient): string {
+  if (color.type === "hex") return color.hex;
+  const stopsStr = color.stops
+    .map((s) => (s.position != null ? `${s.color} ${s.position}%` : s.color))
+    .join(", ");
+  return `linear-gradient(${color.direction}, ${stopsStr})`;
+}
+
+/** 获取颜色的显示文本 */
+export function colorToDisplay(color: HexColor | LinearGradient): string {
+  if (color.type === "hex") return color.hex;
+  return colorToCSS(color);
+}
+
+/** 判断两个颜色是否相同（基于 CSS 字符串比较） */
+export function colorEquals(a: HexColor | LinearGradient, b: HexColor | LinearGradient): boolean {
+  return colorToCSS(a) === colorToCSS(b);
+}
+
+/** 判断颜色值是否已存在于收藏列表中 */
+function isDuplicate(favorites: ColorFavorite[], color: HexColor | LinearGradient): boolean {
+  return favorites.some((f) => colorEquals(f.color, color));
+}
 
 // ── 数据库 ──
 
@@ -110,7 +155,7 @@ export const useFavorites = defineStore("color-favorites", () => {
 
   /** 添加收藏（纯色或渐变） */
   const addFavorite = (color: HexColor | LinearGradient, tags: string[] = []) => {
-    if (value.value.some((f) => colorEquals(f.color, color))) {
+    if (isDuplicate(value.value, color)) {
       throw new Error("该颜色已在收藏中");
     }
 
