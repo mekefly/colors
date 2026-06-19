@@ -1,22 +1,15 @@
 <script lang="ts" setup>
 import { colord } from "colord";
-import { computed, ref, watch } from "vue";
-import {
-  useTagsEditing,
-  useAllTags,
-  useFavorites,
-  colorToCSS,
-  colorToDisplay,
-} from "../utils/favorites";
+import { computed, ref } from "vue";
+import { useAllTagsStore } from "@/use/use-all-tags-store";
+import { colorToCSS, colorToDisplay } from "@/use/use-favorites-api";
+import { useTagsEditingStore } from "@/use/use-tags-editing-store";
 
-const editing = useTagsEditing();
-const allTag = useAllTags();
+const editing = useTagsEditingStore();
+const allTag = useAllTagsStore();
 
 const newTag = ref("");
 const isAddEditing = ref(false);
-const toggleTag = (tag: string) => {
-  editing.toggleTag(tag);
-};
 const addTag = () => {
   editing.addTag(newTag.value);
   isAddEditing.value = false;
@@ -25,18 +18,20 @@ const addTag = () => {
 
 // 纯色判断明暗，渐变色默认当暗色处理
 const isLight = computed(() => {
-  if (editing.color?.type === "hex") {
-    return colord(editing.color.hex).isLight();
+  if (editing.editingColor?.type === "hex") {
+    return colord(editing.editingColor.hex).isLight();
   }
   return false;
 });
-const cssColor = computed(() => (editing.color ? colorToCSS(editing.color) : ""));
-const displayText = computed(() => (editing.color ? colorToDisplay(editing.color) : ""));
+const cssColor = computed(() => (editing.editingColor ? colorToCSS(editing.editingColor) : ""));
+const displayText = computed(() =>
+  editing.editingColor ? colorToDisplay(editing.editingColor) : "",
+);
 </script>
 
 <template>
   <div
-    v-if="editing.editingTags && editing.color"
+    v-if="editing.editingTags && editing.editingColor"
     class="sticky top-6 rounded-xl border border-gray-100 bg-white p-6 shadow-lg"
   >
     <!-- Header Section -->
@@ -77,7 +72,7 @@ const displayText = computed(() => (editing.color ? colorToDisplay(editing.color
       <button
         v-for="tag in allTag.value"
         :key="tag"
-        @click="toggleTag(tag)"
+        @click="editing.toggleTag(tag)"
         :class="[
           'flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm transition-all duration-200',
           editing.editingTags.includes(tag)
@@ -179,7 +174,7 @@ const displayText = computed(() => (editing.color ? colorToDisplay(editing.color
         <div class="flex justify-around">
           <button
             @click="addTag"
-            class="tshrink growion-colors rounded-lg bg-green-500 px-4 py-2 text-white shadow-sm duration-200 hover:bg-green-600"
+            class="shrink rounded-lg bg-green-500 px-4 py-2 text-white shadow-sm transition-colors duration-200 hover:bg-green-600"
             :disabled="!newTag.trim()"
             :class="{ 'cursor-not-allowed opacity-50': !newTag.trim() }"
           >

@@ -2,13 +2,16 @@
 import ColorCard from "@/components/ColorCard.vue";
 import EditingTag from "@/components/EditingTag.vue";
 import TagFilterPanel from "@/components/TagFilterPanel.vue";
-import { useAllTags, useFavorites, useTagFilter, useTagsEditing } from "@/utils/favorites";
-import { useMessage } from "@/utils/message";
+import { useAllTagsStore } from "@/use/use-all-tags-store";
+import { useFavoritesStore } from "@/use/use-favorites-store";
+import { useTagFilterStore } from "@/use/use-tag-filter-store";
+import { useTagsEditingStore } from "@/use/use-tags-editing-store";
+import { useMessage } from "../use";
 
-const favorites = useFavorites();
-const tagFilter = useTagFilter();
-const allTags = useAllTags();
-const editing = useTagsEditing();
+const favorites = useFavoritesStore();
+const tagFilter = useTagFilterStore();
+const allTags = useAllTagsStore();
+const editing = useTagsEditingStore();
 const message = useMessage();
 
 // 从收藏中移除
@@ -38,7 +41,7 @@ const toggleTag = (tag: string) => {
           v-else
           :all-tags="allTags.value"
           :selected-tags="tagFilter.selectedTags"
-          :favorites="favorites.value"
+          :favorites="favorites.items"
           @toggle-tag="toggleTag"
           @clear-tags="tagFilter.clear"
         />
@@ -50,7 +53,7 @@ const toggleTag = (tag: string) => {
         <div class="flex items-center justify-between">
           <h2 class="text-2xl font-bold text-gray-800">我的收藏</h2>
           <span class="text-sm text-gray-500"
-            >{{ tagFilter.filteredFavorites.length }} / {{ favorites.value.length }} 个颜色</span
+            >{{ tagFilter.filteredFavorites.length }} / {{ favorites.items.length }} 个颜色</span
           >
         </div>
 

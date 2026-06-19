@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { useFavorites, type GradientStop, type LinearGradient } from "@/utils/favorites";
-import { colorToCSS } from "@/utils/favorites";
-import { useMessage } from "@/utils/message";
+import { colorToCSS, useFavoritesStore, type LinearGradient } from "@/use/use-favorites-store";
+import type { GradientStop } from "../effect";
+import { useMessage } from "../use";
 
-const favorites = useFavorites();
+const { addFavorite } = useFavoritesStore();
 const message = useMessage();
 
 // ── 预览容器尺寸（用于精确计算圆点位置） ──
@@ -182,7 +182,7 @@ const updateColor = (index: number, color: string) => {
 
 const addToFavorites = () => {
   try {
-    favorites.addFavorite(currentGradient.value);
+    addFavorite(currentGradient.value);
     message.success("已添加到收藏");
   } catch (error) {
     message.error(error instanceof Error ? error.message : "添加失败");

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { colord } from "colord";
 import { computed } from "vue";
-import { useConfigStore } from "@/utils/config";
-import { useTagsEditing, type ColorFavorite } from "@/utils/favorites";
-import { colorToCSS, colorToDisplay } from "@/utils/favorites";
-import { copyColor, copyColor2, copyCSS } from "../utils/copy";
+import { useTagsEditingStore, type ColorFavorite } from "@/use/use-favorites-api";
+import { colorToCSS, colorToDisplay } from "@/use/use-favorites-api";
+import { useConfigStore } from "../use/config.js";
+import { useCopy } from "../use/copy.js";
 import Tags from "./tags.vue";
 
-const editing = useTagsEditing();
+const { startEditing } = useTagsEditingStore();
 const config = useConfigStore();
+const { copyColor2, copyCSS } = useCopy();
 
 interface Props {
   favorite: ColorFavorite;
@@ -54,7 +55,7 @@ const handleCopy = () => {
         class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[#00000033] opacity-0 transition-all group-hover:opacity-100"
       >
         <button
-          @click.stop="editing.startEditing(favorite.id)"
+          @click.stop="startEditing(favorite.id)"
           class="rounded-lg bg-white px-3 py-1 text-sm font-medium text-blue-500 transition-colors hover:bg-blue-50"
         >
           编辑标签

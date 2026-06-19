@@ -12,8 +12,8 @@
  *   - imported: 导入完成后触发，父组件可据此检查迁移状态
  */
 import { ref } from "vue";
-import { useMessage } from "@/utils/message";
 import zToolsApi from "@/utils/ztoolsapi";
+import { useMessage } from "../use";
 
 const props = defineProps<{
   dbNames: string[];

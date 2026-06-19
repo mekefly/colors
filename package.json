@@ -14,12 +14,15 @@
     "preview": "vite preview",
     "publish": "npm run check-all && ztools publish",
     "release": "node scripts/release.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "vue-tsc --build --noEmit"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",
     "@ztools-center/ztools-api-types": "^1.0.1",
     "colord": "^2.9.3",
+    "effect": "^3.21.3",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.2",
     "vue": "3.5.33",

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
-import { useConfigStore } from "@/utils/config";
-import { useCurrentColor } from "@/utils/current-color";
+import { useConfigStore } from "../use/config.js";
+import { useCurrentColor } from "../use/current-color.js";
 import Select from "./Select.vue";
 
 const currentColorStore = useCurrentColor();

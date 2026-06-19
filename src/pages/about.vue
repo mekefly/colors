@@ -3,9 +3,9 @@
  * 关于页
  */
 import DatabaseIO from "@/components/DatabaseIO.vue";
-import { databaseNames } from "@/utils/databases";
+import { DocServiceBuilderDeclarative } from "@/effect/live/docs";
 
-const dbNames = databaseNames();
+const dbNames = Object.values(DocServiceBuilderDeclarative).map((b) => b.id);
 
 const APP_VERSION = "1.4.0";
 

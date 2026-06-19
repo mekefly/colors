@@ -7,7 +7,7 @@ import LoadingPage from "./components/LoadingPage.vue";
 import MigrationPage from "./components/MigrationPage.vue";
 import NavBar from "./components/NavBar.vue";
 import ProvideMessage from "./components/ProvideMessage.vue";
-import { useCurrentColor } from "./utils/current-color";
+import { useCurrentColor } from "./use/current-color.js";
 import zToolsApi from "./utils/ztoolsapi";
 
 const router = useRouter();

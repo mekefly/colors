@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { Colord } from "colord";
-import { useMessage } from "@/utils/message";
-import { useFavorites, type HexColor } from "../utils/favorites";
+import type { HexColor } from "../effect/index.js";
+import { useMessage } from "../use/message.js";
+import { useFavoritesStore } from "../use/use-favorites-api.js";
 import ColorFormat from "./ColorFormat.vue";
 
 const message = useMessage();
-const { addFavorite } = useFavorites();
+const { addFavorite } = useFavoritesStore();
 let color = defineModel<Colord>({ required: true });
 
 const formats = ["hex", "rgb", "hsv/hsb", "hsl", "hwb", "cmyk", "lab", "lch", "xyz"] as const;
 
 // 添加到收藏（纯色）
-const addToFavorites = () => {
+const addToFavorites = async () => {
   try {
     const hex: HexColor = { type: "hex", hex: color.value?.toHex() || "#000000" };
-    addFavorite(hex);
+    await addFavorite(hex);
     message.success("已添加到收藏");
   } catch (error) {
     message.error(error instanceof Error ? error.message : "添加失败");

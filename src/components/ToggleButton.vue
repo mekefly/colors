@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useCurrentColor } from "@/utils/current-color";
+import { useCurrentColor } from "../use";
 
 interface Props {
   modelValue: boolean;

@@ -2,9 +2,9 @@
 import { Colord } from "colord";
 import { computed } from "vue";
 import { colordToString } from "@/utils/color";
-import { useConfigStore } from "@/utils/config";
-import { copyColor2 } from "@/utils/copy";
-import { useMessage } from "@/utils/message";
+import { useConfigStore, useCopy, useMessage } from "../use";
+
+const { copyColor2 } = useCopy();
 
 interface Props {
   color: Colord;
