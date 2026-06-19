@@ -1,7 +1,4 @@
-/**
- * FavoritesDoc Test — 内存 Mock
- */
-
+/** FavoritesDoc Test — 内存 Mock */
 import { Effect, Layer } from "effect";
 import { FavoritesDoc, type DocService, type EffectDbDoc, type FavoritesDocData } from "../tag";
 
@@ -17,9 +14,11 @@ function stripInternalFields<T extends {}>(doc: T): EffectDbDoc<T> {
   return result;
 }
 
+// store 在模块级别，方便 reset
+let store = new Map<string, any>();
+
 function createService(): DocService<FavoritesDocData> {
   const docId = "color-favorites";
-  const store = new Map<string, any>();
 
   store.set(docId, { _id: docId, [FIELD_VERSION]: 0, data: [] });
 
@@ -70,6 +69,11 @@ function createService(): DocService<FavoritesDocData> {
         return { ok: true, rev: merged._rev } as DbReturn;
       }),
   };
+}
+
+/** 重置 store（每个测试前调用） */
+export function resetFavoritesDoc() {
+  store.clear();
 }
 
 /** FavoritesDoc Test Layer */

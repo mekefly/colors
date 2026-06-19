@@ -14,6 +14,8 @@
     "preview": "vite preview",
     "publish": "npm run check-all && ztools publish",
     "release": "node scripts/release.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "vue-tsc --build --noEmit"
   },
   "dependencies": {
