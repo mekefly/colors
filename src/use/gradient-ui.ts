@@ -1,0 +1,306 @@
+// ════════════════════════════════════════════════════════════════
+//  UI Composable — 渐变页面的响应式逻辑
+//  与 gradient.ts（纯函数）分开，避免测试级联加载 vue/effect
+// ════════════════════════════════════════════════════════════════
+
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  type ComputedRef,
+  type Ref,
+} from "vue";
+import { colorToCSS, type LinearGradient } from "@/use/use-favorites-store";
+import type { GradientStop } from "../effect";
+import {
+  correctStopPos,
+  findBestInsertionPoint,
+  mapRange,
+  mouseToCssAngle,
+  mouseToSvgPoint,
+  pointOnRay,
+  projectOnSegment,
+  stretchFactor,
+  ARROW_VISUAL_R,
+  DOT_TRACK_R,
+} from "./gradient";
+
+// ════════════════════════════════════════════════════════════════
+//  类型
+// ════════════════════════════════════════════════════════════════
+
+export interface DotPos {
+  x: number;
+  y: number;
+  color: string;
+  position: number;
+}
+
+export interface UseMessage {
+  warning(msg: string): void;
+  success(msg: string): void;
+  error(msg: string): void;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientAngle — 渐变方向/角度系统
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientAngle() {
+  const angle = ref(90);
+
+  const safeAngle = computed(() => {
+    if (typeof angle.value !== "number" || isNaN(angle.value)) return 90;
+    return angle.value;
+  });
+
+  const directionCSS = computed(() => `${safeAngle.value}deg`);
+
+  const setAngle = (a: number) => {
+    angle.value = a;
+  };
+
+  const presets = [
+    { angle: 0, label: "↑", title: "向上" },
+    { angle: 45, label: "↗", title: "右上" },
+    { angle: 90, label: "→", title: "向右" },
+    { angle: 135, label: "↘", title: "右下" },
+    { angle: 180, label: "↓", title: "向下" },
+    { angle: 225, label: "↙", title: "左下" },
+    { angle: 270, label: "←", title: "向左" },
+    { angle: 315, label: "↖", title: "左上" },
+  ];
+
+  return { angle, safeAngle, directionCSS, setAngle, presets };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientPreview — 预览容器尺寸追踪
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientPreview() {
+  const previewRef = ref<HTMLElement>();
+  const box = reactive({ w: 300, h: 300 });
+
+  onMounted(() => {
+    if (!previewRef.value) return;
+    const update = () => {
+      if (!previewRef.value) return;
+      box.w = previewRef.value.clientWidth || 300;
+      box.h = previewRef.value.clientHeight || 300;
+    };
+    update();
+    const obs = new ResizeObserver(update);
+    obs.observe(previewRef.value);
+  });
+
+  return { previewRef, box };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientArrow — 方向箭头拖拽
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientArrow(
+  previewRef: Ref<HTMLElement | undefined>,
+  angle: Ref<number>,
+) {
+  const isDraggingArrow = ref(false);
+
+  const onArrowDragMove = (e: MouseEvent) => {
+    if (!isDraggingArrow.value || !previewRef.value) return;
+    angle.value = mouseToCssAngle(e, previewRef.value);
+  };
+
+  const onArrowDragEnd = () => {
+    isDraggingArrow.value = false;
+    document.removeEventListener("mousemove", onArrowDragMove);
+    document.removeEventListener("mouseup", onArrowDragEnd);
+  };
+
+  const onArrowDragStart = (e: MouseEvent) => {
+    isDraggingArrow.value = true;
+    onArrowDragMove(e);
+    document.addEventListener("mousemove", onArrowDragMove);
+    document.addEventListener("mouseup", onArrowDragEnd);
+  };
+
+  onUnmounted(() => {
+    document.removeEventListener("mousemove", onArrowDragMove);
+    document.removeEventListener("mouseup", onArrowDragEnd);
+  });
+
+  return { isDraggingArrow, onArrowDragStart };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientStops — 色标增删改
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientStops(message: UseMessage) {
+  const colorStops = ref<GradientStop[]>([
+    { color: "#FF6B6B", position: 0 },
+    { color: "#4ECDC4", position: 100 },
+  ]);
+
+  const addStop = () => {
+    if (colorStops.value.length >= 8) {
+      message.warning("最多支持 8 个色标");
+      return;
+    }
+    const newPos = findBestInsertionPoint(colorStops.value);
+    const sorted = [...colorStops.value].sort(
+      (a, b) => (a.position ?? 0) - (b.position ?? 0),
+    );
+    const rightIdx = sorted.findIndex((s) => (s.position ?? 0) >= newPos);
+    const mixColor =
+      rightIdx >= 0 ? (sorted[rightIdx]?.color ?? "#888888") : "#888888";
+    colorStops.value.push({ color: mixColor, position: newPos });
+  };
+
+  const removeStop = (index: number) => {
+    if (colorStops.value.length <= 2) {
+      message.warning("至少需要 2 个色标");
+      return;
+    }
+    colorStops.value.splice(index, 1);
+  };
+
+  const updatePosition = (index: number, pos: number) => {
+    if (!colorStops.value[index]) return;
+    colorStops.value[index].position = pos;
+  };
+
+  const updateColor = (index: number, color: string) => {
+    if (!colorStops.value[index]) return;
+    colorStops.value[index].color = color;
+  };
+
+  return { colorStops, addStop, removeStop, updatePosition, updateColor };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientCss — CSS 渐变字符串（含角度补偿修正）
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientCss(
+  colorStops: Ref<GradientStop[]>,
+  safeAngle: ComputedRef<number>,
+) {
+  const cssStops = computed(() => {
+    const stretch = stretchFactor(safeAngle.value);
+    return [...colorStops.value]
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map((s) => ({
+        color: s.color,
+        position: correctStopPos(s.position ?? 0, stretch),
+      }));
+  });
+
+  const previewStops = computed(() =>
+    cssStops.value.map((s) => `${s.color} ${s.position}%`).join(", "),
+  );
+
+  const currentGradient = computed<LinearGradient>(() => ({
+    type: "linear-gradient",
+    direction: `${safeAngle.value}deg`,
+    stops: cssStops.value,
+  }));
+
+  const gradientCSS = computed(() => colorToCSS(currentGradient.value));
+
+  return { cssStops, previewStops, currentGradient, gradientCSS };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientGeometry — 箭头/轨道/圆点 SVG 坐标
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientGeometry(
+  safeAngle: ComputedRef<number>,
+  colorStops: Ref<GradientStop[]>,
+) {
+  const arrowStart = computed(() =>
+    pointOnRay(50, 50, safeAngle.value + 180, ARROW_VISUAL_R),
+  );
+  const arrowEnd = computed(() =>
+    pointOnRay(50, 50, safeAngle.value, ARROW_VISUAL_R),
+  );
+  const dotTrackStart = computed(() =>
+    pointOnRay(50, 50, safeAngle.value + 180, DOT_TRACK_R),
+  );
+  const dotTrackEnd = computed(() =>
+    pointOnRay(50, 50, safeAngle.value, DOT_TRACK_R),
+  );
+
+  const dotPositions = computed<DotPos[]>(() => {
+    const s = dotTrackStart.value;
+    const e = dotTrackEnd.value;
+    return [...colorStops.value].map((stop) => {
+      const position = stop.position ?? 0;
+      return {
+        x: mapRange(position, 0, 100, s.x, e.x),
+        y: mapRange(position, 0, 100, s.y, e.y),
+        color: stop.color,
+        position,
+      };
+    });
+  });
+
+  return { arrowStart, arrowEnd, dotTrackStart, dotTrackEnd, dotPositions };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  useGradientDotDrag — 色标圆点拖拽
+// ════════════════════════════════════════════════════════════════
+
+export function useGradientDotDrag(
+  previewRef: Ref<HTMLElement | undefined>,
+  colorStops: Ref<GradientStop[]>,
+  dotTrackStart: ComputedRef<{ x: number; y: number }>,
+  dotTrackEnd: ComputedRef<{ x: number; y: number }>,
+) {
+  const draggingStopIdx = ref<number | null>(null);
+
+  const onDotDragMove = (e: MouseEvent) => {
+    if (draggingStopIdx.value === null || !previewRef.value) return;
+    const mouse = mouseToSvgPoint(e, previewRef.value);
+    const t = projectOnSegment(
+      mouse.x,
+      mouse.y,
+      dotTrackStart.value.x,
+      dotTrackStart.value.y,
+      dotTrackEnd.value.x,
+      dotTrackEnd.value.y,
+    );
+    const step = colorStops.value[draggingStopIdx.value];
+    if (!step) return;
+    colorStops.value[draggingStopIdx.value] = {
+      color: step.color,
+      position: Math.round(t * 100),
+    };
+  };
+
+  const onDotDragEnd = () => {
+    draggingStopIdx.value = null;
+    document.removeEventListener("mousemove", onDotDragMove);
+    document.removeEventListener("mouseup", onDotDragEnd);
+  };
+
+  const onDotDragStart = (index: number, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    draggingStopIdx.value = index;
+    document.addEventListener("mousemove", onDotDragMove);
+    document.addEventListener("mouseup", onDotDragEnd);
+  };
+
+  onUnmounted(() => {
+    document.removeEventListener("mousemove", onDotDragMove);
+    document.removeEventListener("mouseup", onDotDragEnd);
+  });
+
+  return { draggingStopIdx, onDotDragStart };
+}
