@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { colord } from "colord";
 import { useFavoritesStore } from "@/use/use-favorites-store";
 import { useMessage } from "../use";
 import {
@@ -17,6 +18,7 @@ import {
   useGradientPreview,
   useGradientStops,
 } from "../use/gradient-ui";
+import { useColorPicker } from "../use/use-color-picker";
 
 const { addFavorite } = useFavoritesStore();
 const message = useMessage();
@@ -49,6 +51,17 @@ const { draggingStopIdx, onDotDragStart } = useGradientDotDrag(
   dotTrackStart,
   dotTrackEnd,
 );
+
+// ── 通用取色器（点击横排色块进入取色器页面） ──
+const { pickColor } = useColorPicker("gradient");
+
+/** 点击横排颜色块 → 进入取色器页面异步选色 */
+async function pickColorForIndex(index: number) {
+  const current = colorStops.value[index]?.color;
+  if (!current) return;
+  const picked = await pickColor(colord(current));
+  if (picked) updateColor(index, picked.toHex());
+}
 
 // ════════════════════════════════════════════════════════════════
 //  收藏 / 复制 CSS / 重置（页面专属，不抽入 composable）
@@ -202,19 +215,39 @@ const reset = () => {
         <h3 class="text-sm font-semibold text-gray-500">色标</h3>
       </div>
 
-      <!-- 横列颜色块: 每个色标一块, hover 显示 Hex 值 -->
+      <!-- 横列颜色块: 每个色标一块, 点击进入取色器, hover 显示 Hex 值和删除按钮 -->
       <div class="mb-4 flex gap-2">
         <div
           v-for="(stop, index) in colorStops"
           :key="index"
-          class="group flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-white shadow-sm transition-all hover:scale-105 hover:shadow-md"
+          class="group relative flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-white shadow-sm transition-all hover:z-10 hover:scale-105 hover:shadow-md"
           :style="{ backgroundColor: stop.color }"
+          @click="pickColorForIndex(index)"
         >
+          <!-- Hex 值: hover 显示 -->
           <span
             class="font-mono text-[10px] font-bold text-white opacity-0 drop-shadow-md transition-opacity group-hover:opacity-100"
           >
             {{ stop.color }}
           </span>
+          <!-- 删除按钮: hover 显示, 右上角, 至少 3 个色标时才可删除 -->
+          <button
+            v-if="colorStops.length > 2"
+            class="absolute -top-4 -right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[10px] font-bold text-gray-500 opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-red-500 hover:text-white"
+            @click.stop="removeStop(index)"
+            title="删除色标"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-2.5 w-2.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+            >
+              <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         <!-- 末尾的 "+" 添加按钮 -->
         <div
@@ -236,60 +269,6 @@ const reset = () => {
       </div>
 
       <!-- 色标详情列表: color picker + Hex输入 + 位置滑块 + 删除 -->
-      <div class="space-y-2">
-        <div
-          v-for="(stop, index) in colorStops"
-          :key="index"
-          class="flex items-center gap-3 rounded-lg bg-gray-50 p-2.5"
-        >
-          <input
-            type="color"
-            :value="stop.color"
-            @input="updateColor(index, ($event.target as HTMLInputElement).value)"
-            class="h-8 w-8 cursor-pointer rounded-lg border-0 p-0"
-          />
-          <input
-            :value="stop.color"
-            @input="updateColor(index, ($event.target as HTMLInputElement).value)"
-            class="w-20 rounded-lg border border-gray-200 px-2 py-1 font-mono text-xs uppercase focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none"
-            maxlength="7"
-            spellcheck="false"
-          />
-          <div class="flex flex-1 items-center gap-2">
-            <input
-              type="range"
-              :value="stop.position ?? 0"
-              @input="updatePosition(index, Number(($event.target as HTMLInputElement).value))"
-              min="0"
-              max="100"
-              class="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-gray-200 accent-blue-500"
-            />
-            <span class="w-10 text-right text-xs text-gray-500">{{ stop.position ?? 0 }}%</span>
-          </div>
-          <button
-            @click="removeStop(index)"
-            :disabled="colorStops.length <= 2"
-            :class="[
-              'flex h-6 w-6 items-center justify-center rounded-lg transition-colors',
-              colorStops.length <= 2
-                ? 'cursor-not-allowed text-gray-300'
-                : 'text-gray-400 hover:bg-red-50 hover:text-red-500',
-            ]"
-            title="删除色标"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- ═══════ CSS 输出 + 操作按钮 ═══════ -->
