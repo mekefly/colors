@@ -21,7 +21,7 @@ const currentPage = computed(() => {
 });
 </script>
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-4">
+  <div class="mx-auto max-w-7xl px-6 py-4 select-none">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-800">颜色助手</h1>
       <div class="flex items-center space-x-2">

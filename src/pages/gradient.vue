@@ -431,7 +431,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 select-none">
     <!-- ═══════ 圆形渐变预览 + 方向箭头 + 色点 ═══════ -->
     <div
       ref="previewRef"
