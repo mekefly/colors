@@ -3,16 +3,9 @@
 //  与 gradient.ts（纯函数）分开，避免测试级联加载 vue/effect
 // ════════════════════════════════════════════════════════════════
 
-import {
-  computed,
-  onMounted,
-  onUnmounted,
-  reactive,
-  ref,
-  type ComputedRef,
-  type Ref,
-} from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, type ComputedRef, type Ref } from "vue";
 import { colorToCSS, type LinearGradient } from "@/use/use-favorites-store";
+import { id } from "@/utils";
 import type { GradientStop } from "../effect";
 import {
   correctStopPos,
@@ -36,6 +29,7 @@ export interface DotPos {
   y: number;
   color: string;
   position: number;
+  id: string;
 }
 
 export interface UseMessage {
@@ -103,10 +97,7 @@ export function useGradientPreview() {
 //  useGradientArrow — 方向箭头拖拽
 // ════════════════════════════════════════════════════════════════
 
-export function useGradientArrow(
-  previewRef: Ref<HTMLElement | undefined>,
-  angle: Ref<number>,
-) {
+export function useGradientArrow(previewRef: Ref<HTMLElement | undefined>, angle: Ref<number>) {
   const isDraggingArrow = ref(false);
 
   const onArrowDragMove = (e: MouseEvent) => {
@@ -139,11 +130,17 @@ export function useGradientArrow(
 //  useGradientStops — 色标增删改
 // ════════════════════════════════════════════════════════════════
 
+export interface GradientStopWithId extends GradientStop {
+  id: string;
+}
 export function useGradientStops(message: UseMessage) {
-  const colorStops = ref<GradientStop[]>([
-    { color: "#FF6B6B", position: 0 },
-    { color: "#4ECDC4", position: 100 },
+  const colorStops = ref<GradientStopWithId[]>([
+    { color: "#FF6B6B", position: 0, id: id() },
+    { color: "#4ECDC4", position: 100, id: id() },
   ]);
+  const sortedColorStops = computed(() =>
+    colorStops.value.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
+  );
 
   const addStop = () => {
     if (colorStops.value.length >= 8) {
@@ -151,44 +148,39 @@ export function useGradientStops(message: UseMessage) {
       return;
     }
     const newPos = findBestInsertionPoint(colorStops.value);
-    const sorted = [...colorStops.value].sort(
-      (a, b) => (a.position ?? 0) - (b.position ?? 0),
-    );
-    const rightIdx = sorted.findIndex((s) => (s.position ?? 0) >= newPos);
-    const mixColor =
-      rightIdx >= 0 ? (sorted[rightIdx]?.color ?? "#888888") : "#888888";
-    colorStops.value.push({ color: mixColor, position: newPos });
+    const sorted = [...sortedColorStops.value];
+    const rightIdx = sortedColorStops.value.findIndex((s) => (s.position ?? 0) >= newPos);
+    const mixColor = rightIdx >= 0 ? (sorted[rightIdx]?.color ?? "#888888") : "#888888";
+    colorStops.value.push({ color: mixColor, position: newPos, id: id() });
   };
 
-  const removeStop = (index: number) => {
+  const removeStop = (id: string) => {
     if (colorStops.value.length <= 2) {
       message.warning("至少需要 2 个色标");
       return;
     }
-    colorStops.value.splice(index, 1);
+    const idx = colorStops.value.findIndex((s) => s.id === id);
+    if (idx >= 0) colorStops.value.splice(idx, 1);
   };
 
-  const updatePosition = (index: number, pos: number) => {
-    if (!colorStops.value[index]) return;
-    colorStops.value[index].position = pos;
+  const updatePosition = (id: string, pos: number) => {
+    const s = colorStops.value.find((s) => s.id === id);
+    if (s) s.position = pos;
   };
 
-  const updateColor = (index: number, color: string) => {
-    if (!colorStops.value[index]) return;
-    colorStops.value[index].color = color;
+  const updateColor = (id: string, color: string) => {
+    const s = colorStops.value.find((s) => s.id === id);
+    if (s) s.color = color;
   };
 
-  return { colorStops, addStop, removeStop, updatePosition, updateColor };
+  return { colorStops, sortedColorStops, addStop, removeStop, updatePosition, updateColor };
 }
 
 // ════════════════════════════════════════════════════════════════
 //  useGradientCss — CSS 渐变字符串（含角度补偿修正）
 // ════════════════════════════════════════════════════════════════
 
-export function useGradientCss(
-  colorStops: Ref<GradientStop[]>,
-  safeAngle: ComputedRef<number>,
-) {
+export function useGradientCss(colorStops: Ref<GradientStop[]>, safeAngle: ComputedRef<number>) {
   const cssStops = computed(() => {
     const stretch = stretchFactor(safeAngle.value);
     return [...colorStops.value]
@@ -222,18 +214,10 @@ export function useGradientGeometry(
   safeAngle: ComputedRef<number>,
   colorStops: Ref<GradientStop[]>,
 ) {
-  const arrowStart = computed(() =>
-    pointOnRay(50, 50, safeAngle.value + 180, ARROW_VISUAL_R),
-  );
-  const arrowEnd = computed(() =>
-    pointOnRay(50, 50, safeAngle.value, ARROW_VISUAL_R),
-  );
-  const dotTrackStart = computed(() =>
-    pointOnRay(50, 50, safeAngle.value + 180, DOT_TRACK_R),
-  );
-  const dotTrackEnd = computed(() =>
-    pointOnRay(50, 50, safeAngle.value, DOT_TRACK_R),
-  );
+  const arrowStart = computed(() => pointOnRay(50, 50, safeAngle.value + 180, ARROW_VISUAL_R));
+  const arrowEnd = computed(() => pointOnRay(50, 50, safeAngle.value, ARROW_VISUAL_R));
+  const dotTrackStart = computed(() => pointOnRay(50, 50, safeAngle.value + 180, DOT_TRACK_R));
+  const dotTrackEnd = computed(() => pointOnRay(50, 50, safeAngle.value, DOT_TRACK_R));
 
   const dotPositions = computed<DotPos[]>(() => {
     const s = dotTrackStart.value;
@@ -245,6 +229,7 @@ export function useGradientGeometry(
         y: mapRange(position, 0, 100, s.y, e.y),
         color: stop.color,
         position,
+        id: stop.id,
       };
     });
   });
@@ -258,14 +243,14 @@ export function useGradientGeometry(
 
 export function useGradientDotDrag(
   previewRef: Ref<HTMLElement | undefined>,
-  colorStops: Ref<GradientStop[]>,
+  colorStops: Ref<(GradientStop & { id: string })[]>,
   dotTrackStart: ComputedRef<{ x: number; y: number }>,
   dotTrackEnd: ComputedRef<{ x: number; y: number }>,
 ) {
-  const draggingStopIdx = ref<number | null>(null);
+  const draggingStopId = ref<string | null>(null);
 
   const onDotDragMove = (e: MouseEvent) => {
-    if (draggingStopIdx.value === null || !previewRef.value) return;
+    if (draggingStopId.value === null || !previewRef.value) return;
     const mouse = mouseToSvgPoint(e, previewRef.value);
     const t = projectOnSegment(
       mouse.x,
@@ -275,24 +260,21 @@ export function useGradientDotDrag(
       dotTrackEnd.value.x,
       dotTrackEnd.value.y,
     );
-    const step = colorStops.value[draggingStopIdx.value];
+    const step = colorStops.value.find((s) => s.id === draggingStopId.value);
     if (!step) return;
-    colorStops.value[draggingStopIdx.value] = {
-      color: step.color,
-      position: Math.round(t * 100),
-    };
+    step.position = Math.round(t * 100);
   };
 
   const onDotDragEnd = () => {
-    draggingStopIdx.value = null;
+    draggingStopId.value = null;
     document.removeEventListener("mousemove", onDotDragMove);
     document.removeEventListener("mouseup", onDotDragEnd);
   };
 
-  const onDotDragStart = (index: number, e: MouseEvent) => {
+  const onDotDragStart = (id: string, e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    draggingStopIdx.value = index;
+    draggingStopId.value = id;
     document.addEventListener("mousemove", onDotDragMove);
     document.addEventListener("mouseup", onDotDragEnd);
   };
@@ -302,5 +284,5 @@ export function useGradientDotDrag(
     document.removeEventListener("mouseup", onDotDragEnd);
   });
 
-  return { draggingStopIdx, onDotDragStart };
+  return { draggingStopId, onDotDragStart };
 }

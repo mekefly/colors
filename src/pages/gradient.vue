@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { colord } from "colord";
 import { useFavoritesStore } from "@/use/use-favorites-store";
+import { id } from "@/utils";
 import { useMessage } from "../use";
 import {
   ARROW_HEAD_ANGLE,
@@ -33,7 +34,8 @@ const { angle, safeAngle, directionCSS, setAngle, presets } = useGradientAngle()
 const { onArrowDragStart } = useGradientArrow(previewRef, angle);
 
 // ── 色标增删改 ──
-const { colorStops, addStop, removeStop, updatePosition, updateColor } = useGradientStops(message);
+const { colorStops, sortedColorStops, addStop, removeStop, updatePosition, updateColor } =
+  useGradientStops(message);
 
 // ── CSS 渐变字符串（含角度补偿修正） ──
 const { previewStops, currentGradient, gradientCSS } = useGradientCss(colorStops, safeAngle);
@@ -45,7 +47,7 @@ const { arrowStart, arrowEnd, dotTrackStart, dotTrackEnd, dotPositions } = useGr
 );
 
 // ── 色标圆点拖拽 ──
-const { draggingStopIdx, onDotDragStart } = useGradientDotDrag(
+const { draggingStopId, onDotDragStart } = useGradientDotDrag(
   previewRef,
   colorStops,
   dotTrackStart,
@@ -56,11 +58,11 @@ const { draggingStopIdx, onDotDragStart } = useGradientDotDrag(
 const { pickColor } = useColorPicker("gradient");
 
 /** 点击横排颜色块 → 进入取色器页面异步选色 */
-async function pickColorForIndex(index: number) {
-  const current = colorStops.value[index]?.color;
-  if (!current) return;
-  const picked = await pickColor(colord(current));
-  if (picked) updateColor(index, picked.toHex());
+async function pickColorForId(id: string) {
+  const stop = colorStops.value.find((s) => s.id === id);
+  if (!stop) return;
+  const picked = await pickColor(colord(stop.color));
+  if (picked) updateColor(id, picked.toHex());
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -88,8 +90,8 @@ const copyCSS = async () => {
 const reset = () => {
   angle.value = 90;
   colorStops.value = [
-    { color: "#FF6B6B", position: 0 },
-    { color: "#4ECDC4", position: 100 },
+    { color: "#FF6B6B", position: 0, id: id() },
+    { color: "#4ECDC4", position: 100, id: id() },
   ];
 };
 </script>
@@ -166,16 +168,16 @@ const reset = () => {
           （border 会占据尺寸, 使 translate(-50%) 的数学锚点偏离实际中心）
       -->
       <div
-        v-for="(dot, i) in dotPositions"
-        :key="i"
+        v-for="dot in dotPositions"
+        :key="dot.id"
         class="absolute"
         :style="{
           left: `${dot.x}%`,
           top: `${dot.y}%`,
           transform: 'translate(-50%, -50%)',
-          zIndex: draggingStopIdx === i ? 10 : 1,
+          zIndex: draggingStopId === dot.id ? 10 : 1,
         }"
-        @mousedown.stop="onDotDragStart(i, $event)"
+        @mousedown.stop="onDotDragStart(dot.id, $event)"
       >
         <div
           class="cursor-grab rounded-full shadow-md transition-transform duration-150 hover:scale-150 active:scale-125 active:cursor-grabbing"
@@ -216,40 +218,43 @@ const reset = () => {
       </div>
 
       <!-- 横列颜色块: 每个色标一块, 点击进入取色器, hover 显示 Hex 值和删除按钮 -->
-      <div class="mb-4 flex gap-2">
-        <div
-          v-for="(stop, index) in colorStops"
-          :key="index"
-          class="group relative flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-white shadow-sm transition-all hover:z-10 hover:scale-105 hover:shadow-md"
-          :style="{ backgroundColor: stop.color }"
-          @click="pickColorForIndex(index)"
-        >
-          <!-- Hex 值: hover 显示 -->
-          <span
-            class="font-mono text-[10px] font-bold text-white opacity-0 drop-shadow-md transition-opacity group-hover:opacity-100"
+      <!-- TransitionGroup: move=位置变化, enter=新增, leave=删除, 不同动画 -->
+      <div class="mb-4 flex gap-2 rounded-lg">
+        <TransitionGroup tag="div" name="color-stop" class="flex flex-1 gap-2">
+          <div
+            v-for="stop in sortedColorStops"
+            :key="stop.id"
+            class="group relative flex h-12 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-white shadow-sm transition-all hover:z-10 hover:scale-105 hover:shadow-md"
+            :style="{ backgroundColor: stop.color }"
+            @click="pickColorForId(stop.id)"
           >
-            {{ stop.color }}
-          </span>
-          <!-- 删除按钮: hover 显示, 右上角, 至少 3 个色标时才可删除 -->
-          <button
-            v-if="colorStops.length > 2"
-            class="absolute -top-4 -right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[10px] font-bold text-gray-500 opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-red-500 hover:text-white"
-            @click.stop="removeStop(index)"
-            title="删除色标"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-2.5 w-2.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
+            <!-- Hex 值: hover 显示 -->
+            <span
+              class="font-mono text-[10px] font-bold text-white opacity-0 drop-shadow-md transition-opacity group-hover:opacity-100"
             >
-              <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <!-- 末尾的 "+" 添加按钮 -->
+              {{ stop.color }}
+            </span>
+            <!-- 删除按钮: hover 显示, 右上角, 至少 3 个色标时才可删除 -->
+            <button
+              v-if="colorStops.length > 2"
+              class="absolute -top-4 -right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[10px] font-bold text-gray-500 opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-red-500 hover:text-white"
+              @click.stop="removeStop(stop.id)"
+              title="删除色标"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-2.5 w-2.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </TransitionGroup>
+        <!-- 末尾的 + 添加按钮 -->
         <div
           v-if="colorStops.length < 8"
           class="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-blue-400 hover:text-blue-500"
@@ -350,3 +355,31 @@ const reset = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ═══════ 横排色标动画 ═══════ */
+
+/* ── 位置改变（重排）—— FLIP 平滑跟随 ── */
+.color-stop-move {
+  transition: all 0.4s ease;
+}
+
+/* ── 新增色标 —— 从右缩放弹入 ── */
+.color-stop-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.color-stop-enter-from {
+  opacity: 0;
+  transform: scaleX(0.3);
+}
+
+/* ── 删除色标 —— 淡出缩小并上移 ── */
+.color-stop-leave-active {
+  transition: all 0.25s ease-in;
+  position: absolute;
+}
+.color-stop-leave-to {
+  opacity: 0;
+  transform: scaleX(0.3) translateY(-8px);
+}
+</style>
