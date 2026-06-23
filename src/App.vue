@@ -38,7 +38,11 @@ zToolsApi.onPluginEnter((parm) => {
       <template #header>
         <NavBar />
       </template>
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <KeepAlive>
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </Layerout>
   </Help>
 </template>
