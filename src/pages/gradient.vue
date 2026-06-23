@@ -29,14 +29,21 @@ const message = useMessage();
 const { previewRef } = useGradientPreview();
 
 // ── 渐变方向/角度 ──
-const { angle, safeAngle, directionCSS, setAngle, presets } = useGradientAngle();
+const { angle, safeAngle, directionCSS, setAngle, presets, resetAngle } = useGradientAngle();
 
 // ── 方向箭头拖拽 ──
 const { onArrowDragStart } = useGradientArrow(previewRef, angle);
 
 // ── 色标增删改 ──
-const { colorStops, sortedColorStops, addStop, removeStop, updatePosition, updateColor } =
-  useGradientStops(message);
+const {
+  colorStops,
+  sortedColorStops,
+  addStop,
+  removeStop,
+  updatePosition,
+  updateColor,
+  resetColor,
+} = useGradientStops(message);
 
 // ── CSS 渐变字符串（含角度补偿修正） ──
 const { previewStops, currentGradient, gradientCSS } = useGradientCss(colorStops, safeAngle);
@@ -88,12 +95,9 @@ const copyCSS = async () => {
   }
 };
 
-const reset = () => {
-  angle.value = 90;
-  colorStops.value = [
-    { color: "#FF6B6B", position: 0, id: id() },
-    { color: "#4ECDC4", position: 100, id: id() },
-  ];
+const onReset = () => {
+  resetAngle();
+  resetColor();
 };
 </script>
 
@@ -332,7 +336,7 @@ const reset = () => {
             <span class="text-sm">复制 CSS</span>
           </button>
           <button
-            @click="reset"
+            @click="onReset"
             class="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-50"
           >
             <svg

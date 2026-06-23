@@ -2,6 +2,8 @@
 //  几何工具函数（纯函数，不依赖组件状态/响应式）
 // ════════════════════════════════════════════════════════════════
 
+import { colord, type Colord } from "colord";
+
 interface PointXY {
   x: number;
   y: number;

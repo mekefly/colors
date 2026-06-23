@@ -3,10 +3,11 @@
 //  与 gradient.ts（纯函数）分开，避免测试级联加载 vue/effect
 // ════════════════════════════════════════════════════════════════
 
+import { Colord, colord } from "colord";
 import { computed, onMounted, onUnmounted, reactive, ref, type ComputedRef, type Ref } from "vue";
 import type { GradientStop } from "@/effect";
 import { colorToCSS, type LinearGradient } from "@/use/use-favorites-store";
-import { id } from "@/utils";
+import { id, randomColor, randomGradientPair } from "@/utils";
 import {
   correctStopPos,
   findBestInsertionPoint,
@@ -39,15 +40,15 @@ export interface UseMessage {
   error(msg: string): void;
 }
 
+const DEFAULT_ANGLE = 45;
 // ════════════════════════════════════════════════════════════════
 //  useGradientAngle — 渐变方向/角度系统
 // ════════════════════════════════════════════════════════════════
-
 export function useGradientAngle() {
-  const angle = ref(90);
+  const angle = ref(DEFAULT_ANGLE);
 
   const safeAngle = computed(() => {
-    if (typeof angle.value !== "number" || isNaN(angle.value)) return 90;
+    if (typeof angle.value !== "number" || isNaN(angle.value)) return DEFAULT_ANGLE;
     return angle.value;
   });
 
@@ -67,8 +68,11 @@ export function useGradientAngle() {
     { angle: 270, label: "←", title: "向左" },
     { angle: 315, label: "↖", title: "左上" },
   ];
+  const resetAngle = () => {
+    angle.value = DEFAULT_ANGLE;
+  };
 
-  return { angle, safeAngle, directionCSS, setAngle, presets };
+  return { angle, safeAngle, directionCSS, setAngle, presets, resetAngle };
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -135,10 +139,7 @@ export interface GradientStopWithId extends GradientStop {
   id: string;
 }
 export function useGradientStops(message: UseMessage) {
-  const colorStops = ref<GradientStopWithId[]>([
-    { color: "#FF6B6B", position: 0, id: id() },
-    { color: "#4ECDC4", position: 100, id: id() },
-  ]);
+  const colorStops = ref<GradientStopWithId[]>(randomStops());
   const sortedColorStops = computed(() =>
     colorStops.value.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
   );
@@ -153,8 +154,8 @@ export function useGradientStops(message: UseMessage) {
     const rightIdx = sorted.findIndex((s) => (s.position ?? 0) >= newPos);
     const mixColor =
       rightIdx >= 0
-        ? (sorted[rightIdx]?.color ?? "#000000")
-        : (sorted[sorted.length - 1]?.color ?? "#888888");
+        ? (sorted[rightIdx]?.color ?? randomColor().toHex())
+        : (sorted[sorted.length - 1]?.color ?? randomColor().toHex());
     colorStops.value.push({ color: mixColor, position: newPos, id: id() });
   };
 
@@ -177,7 +178,35 @@ export function useGradientStops(message: UseMessage) {
     if (s) s.color = color;
   };
 
-  return { colorStops, sortedColorStops, addStop, removeStop, updatePosition, updateColor };
+  const resetColor = () => {
+    colorStops.value = randomStops();
+  };
+
+  return {
+    colorStops,
+    sortedColorStops,
+    addStop,
+    removeStop,
+    updatePosition,
+    updateColor,
+    resetColor,
+  };
+}
+
+function randomStops() {
+  const [c1, c2] = randomGradientPair();
+  return [
+    {
+      color: c1.toHex(),
+      position: 0,
+      id: id(),
+    },
+    {
+      color: c2.toHex(),
+      position: 100,
+      id: id(),
+    },
+  ];
 }
 
 // ════════════════════════════════════════════════════════════════
