@@ -147,7 +147,7 @@ export function useGradientStops(message: UseMessage) {
       message.warning("最多支持 8 个色标");
       return;
     }
-    const newPos = findBestInsertionPoint(colorStops.value);
+    const newPos = findBestInsertionPoint(colorStops.value.map((s) => s.position ?? 0));
     const sorted = [...sortedColorStops.value];
     const rightIdx = sortedColorStops.value.findIndex((s) => (s.position ?? 0) >= newPos);
     const mixColor = rightIdx >= 0 ? (sorted[rightIdx]?.color ?? "#888888") : "#888888";

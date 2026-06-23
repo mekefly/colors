@@ -2,8 +2,6 @@
 //  几何工具函数（纯函数，不依赖组件状态/响应式）
 // ════════════════════════════════════════════════════════════════
 
-import type { GradientStop } from "../effect";
-
 interface PointXY {
   x: number;
   y: number;
@@ -65,15 +63,38 @@ export function correctStopPos(position: number, stretch: number): number {
   return 50 + stretch * (position - 50);
 }
 
-/** 在已有色标列表中找最大空隙, 返回插入中点（若空隙不足2则返回50） */
-export function findBestInsertionPoint(stops: GradientStop[]): number {
-  const sorted = [...stops].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const a = sorted[i]?.position ?? 0;
-    const b = sorted[i + 1]?.position ?? 0;
-    if (b - a >= 2) return Math.round((a + b) / 2);
+/**
+ * 范围0-100，自动查找最大空隙
+ * @param areas
+ */
+export function findBestInsertionPoint(areas: number[]): number {
+  if (areas.length === 0) return 0;
+  const sorted = [...areas].sort((a, b) => a - b);
+  let maxAreaSize = 0;
+  let maxAreaInsertionPoint = 0;
+  const setMaxArea = (insertionPoint: number, areaSize: number) => {
+    if (areaSize > maxAreaSize) {
+      maxAreaSize = areaSize;
+      maxAreaInsertionPoint = insertionPoint;
+    }
+  };
+  if (sorted[0] !== 0) {
+    maxAreaSize = (sorted[0] as number) - 0;
+    maxAreaInsertionPoint = 0;
   }
-  return 50;
+  if (sorted[sorted.length - 1] !== 100) {
+    setMaxArea(100, 100 - (sorted[sorted.length - 1] as number));
+  }
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const a = sorted[i] as number;
+    const b = sorted[i + 1] as number;
+    const gap = b - a;
+    const point = a + gap / 2;
+    const size = point - a;
+    setMaxArea(point, size);
+  }
+
+  return maxAreaInsertionPoint;
 }
 
 /** 范围映射 value ∈ [start, end] → [start1, end1]

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { GradientStop } from "../effect";
 import {
   correctStopPos,
   findBestInsertionPoint,
@@ -7,7 +8,6 @@ import {
   projectOnSegment,
   stretchFactor,
 } from "./gradient";
-import type { GradientStop } from "../effect";
 
 // ════════════════════════════════════════════════════════════════
 //  pointOnRay — 中心+CSS角度+半径 → 射线上的点
@@ -150,63 +150,42 @@ describe("correctStopPos", () => {
 
 // ════════════════════════════════════════════════════════════════
 //  findBestInsertionPoint — 找最大空隙插入点
+//  最终作用是找到插入该光标后，区域呈现最的均匀性
 // ════════════════════════════════════════════════════════════════
 describe("findBestInsertionPoint", () => {
+  it("空数组 → 返回 0", () => {
+    expect(findBestInsertionPoint([])).toBe(0);
+  });
+  it("单个色标0 → 返回 100", () => {
+    expect(findBestInsertionPoint([0])).toBe(100);
+  });
   it("两端 [0, 100] → 50", () => {
-    const stops: GradientStop[] = [
-      { color: "#000", position: 0 },
-      { color: "#fff", position: 100 },
-    ];
-    expect(findBestInsertionPoint(stops)).toBe(50);
+    expect(findBestInsertionPoint([0, 100])).toBe(50);
   });
   it("三个等距 [0, 50, 100] → 第一个大间隙中点 25", () => {
-    const stops: GradientStop[] = [
-      { color: "#000", position: 0 },
-      { color: "#888", position: 50 },
-      { color: "#fff", position: 100 },
-    ];
-    expect(findBestInsertionPoint(stops)).toBe(25);
+    expect(findBestInsertionPoint([0, 50, 100])).toBe(25);
   });
-  it("不均匀 [0, 20, 80, 100] → 第一个大间隙 0-20 的中点 10", () => {
+  it("不均匀 [0, 20, 80, 100] → 最大间隙 20-80 的中点 50", () => {
     const stops: GradientStop[] = [
       { color: "#a", position: 0 },
       { color: "#b", position: 20 },
       { color: "#c", position: 80 },
       { color: "#d", position: 100 },
     ];
-    // 间隙: 20-0=20(第一), 80-20=60, 100-80=20
-    expect(findBestInsertionPoint(stops)).toBe(10);
+    // 间隙: 20-0=20, 80-20=60(最大), 100-80=20
+    expect(findBestInsertionPoint([0, 20, 80, 100])).toBe(50);
   });
-  it("间隙不足 2 → 默认返回 50", () => {
-    const stops: GradientStop[] = [
-      { color: "#a", position: 0 },
-      { color: "#b", position: 1 },
-    ];
-    expect(findBestInsertionPoint(stops)).toBe(50);
-  });
-  it("单个色标 → 返回 50", () => {
-    const stops: GradientStop[] = [{ color: "#000", position: 0 }];
-    expect(findBestInsertionPoint(stops)).toBe(50);
-  });
-  it("空数组 → 返回 50", () => {
-    expect(findBestInsertionPoint([])).toBe(50);
+  it("间隙不足 2 → 回退到隐含边界 1-100 的中点 100", () => {
+    expect(findBestInsertionPoint([0, 1])).toBe(100);
   });
   it("未排序输入 → 自动排序后插入", () => {
-    const stops: GradientStop[] = [
-      { color: "#c", position: 100 },
-      { color: "#a", position: 0 },
-    ];
-    expect(findBestInsertionPoint(stops)).toBe(50);
+    expect(findBestInsertionPoint([100, 0])).toBe(50);
   });
-  it("大量相邻色标密集填充 → 返回第一个≥2的间隙中点", () => {
-    const stops: GradientStop[] = [
-      { color: "#a", position: 0 },
-      { color: "#b", position: 1 },
-      { color: "#c", position: 2 },
-      { color: "#d", position: 10 },
-    ];
-    // 间隙: 1-0=1, 2-1=1, 10-2=8(≥2) → (2+10)/2 = 6
-    expect(findBestInsertionPoint(stops)).toBe(6);
+  it("色标不在端点 [40, 60] → 隐含边界 0-40 ,40-100，由于0没被占用，先生成区域0-40, 0", () => {
+    expect(findBestInsertionPoint([40, 60])).toBe(0);
+  });
+  it("一端到边界 [0, 40, 60] →已有最大边界0-40,隐含边界40-100，先生成区域40-100, 选 100", () => {
+    expect(findBestInsertionPoint([0, 40, 60])).toBe(100);
   });
 });
 
