@@ -181,7 +181,7 @@ const onReset = () => {
       <div
         v-for="dot in dotPositions"
         :key="dot.id"
-        class="absolute"
+        class="group absolute"
         :style="{
           left: `${dot.x}%`,
           top: `${dot.y}%`,
@@ -190,6 +190,16 @@ const onReset = () => {
         }"
         @mousedown.stop="onDotDragStart(dot.id, $event)"
       >
+        <!-- 拖拽时显示位置百分比 -->
+
+        <div
+          :class="[
+            `absolute -top-10 left-1/2 z-10 -translate-x-1/2 rounded-md bg-gray-800/80 px-1.5 py-0.5 font-mono text-[11px] font-bold whitespace-nowrap text-white shadow-md backdrop-blur-sm transition-all group-hover:translate-y-0 group-hover:opacity-100`,
+            dot.id === draggingStopId ? '' : 'translate-y-2 opacity-0',
+          ]"
+        >
+          {{ dot.position }}%
+        </div>
         <div
           class="cursor-grab rounded-full shadow-md transition-transform duration-150 hover:scale-150 active:scale-125 active:cursor-grabbing"
           :style="{
@@ -245,6 +255,12 @@ const onReset = () => {
             >
               {{ stop.color }}
             </span>
+
+            <div
+              class="absolute -top-7 left-1/2 -translate-x-1/2 translate-y-2 rounded-md bg-gray-800/80 px-1.5 py-0.5 font-mono text-[11px] font-bold whitespace-nowrap text-white opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:translate-y-0 group-hover:opacity-100"
+            >
+              {{ stop.position }}%
+            </div>
             <!-- 删除按钮: hover 显示, 右上角, 至少 3 个色标时才可删除 -->
             <button
               v-if="colorStops.length > 2"
