@@ -9,6 +9,7 @@ import {
   ARROW_HEAD_STROKE,
   ARROW_STROKE,
   DOT_SIZE,
+  MAX_STOPS,
 } from "../use/gradient";
 import {
   useGradientAngle,
@@ -256,7 +257,7 @@ const reset = () => {
         </TransitionGroup>
         <!-- 末尾的 + 添加按钮 -->
         <div
-          v-if="colorStops.length < 8"
+          v-if="colorStops.length < MAX_STOPS"
           class="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-blue-400 hover:text-blue-500"
           @click="addStop"
         >

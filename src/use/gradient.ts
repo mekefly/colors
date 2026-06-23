@@ -136,3 +136,5 @@ export const ARROW_HEAD_STROKE = 1.5;
 // 衍生常量（自动计算, 不用改）
 export const ARROW_VISUAL_R = DOT_TRACK_R + ARROW_EXTRA;
 export const ARROW_STROKE = (DOT_SIZE * 0.618) / 3;
+
+export const MAX_STOPS = 9;

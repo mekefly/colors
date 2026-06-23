@@ -4,9 +4,9 @@
 // ════════════════════════════════════════════════════════════════
 
 import { computed, onMounted, onUnmounted, reactive, ref, type ComputedRef, type Ref } from "vue";
+import type { GradientStop } from "@/effect";
 import { colorToCSS, type LinearGradient } from "@/use/use-favorites-store";
 import { id } from "@/utils";
-import type { GradientStop } from "../effect";
 import {
   correctStopPos,
   findBestInsertionPoint,
@@ -18,6 +18,7 @@ import {
   stretchFactor,
   ARROW_VISUAL_R,
   DOT_TRACK_R,
+  MAX_STOPS,
 } from "./gradient";
 
 // ════════════════════════════════════════════════════════════════
@@ -143,14 +144,17 @@ export function useGradientStops(message: UseMessage) {
   );
 
   const addStop = () => {
-    if (colorStops.value.length >= 8) {
-      message.warning("最多支持 8 个色标");
+    if (colorStops.value.length >= MAX_STOPS) {
+      message.warning(`最多支持 ${MAX_STOPS} 个色标`);
       return;
     }
     const newPos = findBestInsertionPoint(colorStops.value.map((s) => s.position ?? 0));
-    const sorted = [...sortedColorStops.value];
-    const rightIdx = sortedColorStops.value.findIndex((s) => (s.position ?? 0) >= newPos);
-    const mixColor = rightIdx >= 0 ? (sorted[rightIdx]?.color ?? "#888888") : "#888888";
+    const sorted = sortedColorStops.value;
+    const rightIdx = sorted.findIndex((s) => (s.position ?? 0) >= newPos);
+    const mixColor =
+      rightIdx >= 0
+        ? (sorted[rightIdx]?.color ?? "#000000")
+        : (sorted[sorted.length - 1]?.color ?? "#888888");
     colorStops.value.push({ color: mixColor, position: newPos, id: id() });
   };
 
@@ -212,7 +216,7 @@ export function useGradientCss(colorStops: Ref<GradientStop[]>, safeAngle: Compu
 
 export function useGradientGeometry(
   safeAngle: ComputedRef<number>,
-  colorStops: Ref<GradientStop[]>,
+  colorStops: Ref<GradientStopWithId[]>,
 ) {
   const arrowStart = computed(() => pointOnRay(50, 50, safeAngle.value + 180, ARROW_VISUAL_R));
   const arrowEnd = computed(() => pointOnRay(50, 50, safeAngle.value, ARROW_VISUAL_R));
