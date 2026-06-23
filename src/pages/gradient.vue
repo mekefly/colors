@@ -102,7 +102,13 @@ const onReset = () => {
 </script>
 
 <template>
-  <div class="space-y-6 select-none">
+  <div class="relative space-y-6 select-none">
+    <!-- ──── 左上角角度值 ──── -->
+    <div
+      class="absolute top-2 left-2 z-20 rounded-md bg-white/70 px-1.5 py-0.5 font-mono text-lg font-bold text-gray-700 shadow-sm backdrop-blur-sm"
+    >
+      {{ angle }}°
+    </div>
     <!-- ═══════ 圆形渐变预览 + 方向箭头 + 色点 ═══════ -->
     <div
       ref="previewRef"
