@@ -214,6 +214,7 @@ function randomStops() {
 // ════════════════════════════════════════════════════════════════
 
 export function useGradientCss(colorStops: Ref<GradientStop[]>, safeAngle: ComputedRef<number>) {
+  // ── 修正版（圆形预览补偿） ──
   const cssStops = computed(() => {
     const stretch = stretchFactor(safeAngle.value);
     return [...colorStops.value]
@@ -228,6 +229,13 @@ export function useGradientCss(colorStops: Ref<GradientStop[]>, safeAngle: Compu
     cssStops.value.map((s) => `${s.color} ${s.position}%`).join(", "),
   );
 
+  // ── 原始值（未修正，用于收藏和复制 CSS） ──
+  const rawStops = computed(() =>
+    [...colorStops.value]
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map((s) => ({ color: s.color, position: s.position ?? 0 })),
+  );
+
   const currentGradient = computed<LinearGradient>(() => ({
     type: "linear-gradient",
     direction: `${safeAngle.value}deg`,
@@ -236,7 +244,22 @@ export function useGradientCss(colorStops: Ref<GradientStop[]>, safeAngle: Compu
 
   const gradientCSS = computed(() => colorToCSS(currentGradient.value));
 
-  return { cssStops, previewStops, currentGradient, gradientCSS };
+  const rawCurrentGradient = computed<LinearGradient>(() => ({
+    type: "linear-gradient",
+    direction: `${safeAngle.value}deg`,
+    stops: rawStops.value,
+  }));
+
+  const rawGradientCSS = computed(() => colorToCSS(rawCurrentGradient.value));
+
+  return {
+    cssStops,
+    previewStops,
+    currentGradient,
+    gradientCSS,
+    rawCurrentGradient,
+    rawGradientCSS,
+  };
 }
 
 // ════════════════════════════════════════════════════════════════

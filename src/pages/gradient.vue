@@ -46,7 +46,7 @@ const {
 } = useGradientStops(message);
 
 // ── CSS 渐变字符串（含角度补偿修正） ──
-const { previewStops, currentGradient, gradientCSS } = useGradientCss(colorStops, safeAngle);
+const { gradientCSS, rawCurrentGradient, rawGradientCSS } = useGradientCss(colorStops, safeAngle);
 
 // ── 箭头/轨道/圆点 SVG 坐标 ──
 const { arrowStart, arrowEnd, dotTrackStart, dotTrackEnd, dotPositions } = useGradientGeometry(
@@ -79,7 +79,7 @@ async function pickColorForId(id: string) {
 
 const addToFavorites = () => {
   try {
-    addFavorite(currentGradient.value);
+    addFavorite(rawCurrentGradient.value);
     message.success("已添加到收藏");
   } catch (error) {
     message.error(error instanceof Error ? error.message : "添加失败");
@@ -88,7 +88,7 @@ const addToFavorites = () => {
 
 const copyCSS = async () => {
   try {
-    await navigator.clipboard.writeText(gradientCSS.value);
+    await navigator.clipboard.writeText(rawGradientCSS.value);
     message.success("已复制 CSS");
   } catch {
     message.error("复制失败");
@@ -108,7 +108,7 @@ const onReset = () => {
       ref="previewRef"
       class="relative mx-auto h-[300px] w-[300px] overflow-visible rounded-full shadow-lg ring-2 ring-gray-300"
       :style="{
-        background: `linear-gradient(${directionCSS}, ${previewStops})`,
+        background: gradientCSS,
       }"
       @mousedown="onArrowDragStart"
     >
@@ -290,7 +290,7 @@ const onReset = () => {
           @click="copyCSS"
           title="点击复制"
         >
-          {{ gradientCSS }}
+          {{ rawGradientCSS }}
         </div>
         <p class="mt-2 text-xs text-gray-400">点击复制 CSS 代码</p>
       </div>
